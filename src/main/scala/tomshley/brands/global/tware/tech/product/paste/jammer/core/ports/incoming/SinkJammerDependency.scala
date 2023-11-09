@@ -4,11 +4,11 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives.*
 import akka.stream.scaladsl.{Concat, Flow, Source, StreamConverters}
 import akka.util.ByteString
-import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, IncomingPortAsync, Port, PortAsyncExecution}
+import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, PortAsyncExecution}
 import tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{JammerParsedRequest, JammerSourcedDependencies}
 import tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 sealed trait SinkJammerDependency extends IncomingPort[JammerParsedRequest, JammerSourcedDependencies] with PortAsyncExecution[JammerParsedRequest, JammerSourcedDependencies] {
   override def executeAsync(inboundModel: JammerParsedRequest)(implicit ec: ExecutionContext): JammerSourcedDependencies = {

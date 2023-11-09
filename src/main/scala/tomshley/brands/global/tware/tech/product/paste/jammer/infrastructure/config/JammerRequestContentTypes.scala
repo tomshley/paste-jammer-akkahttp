@@ -77,13 +77,18 @@ import akka.http.scaladsl.model.*
  *  |   .3g2      | 3GPP2 audio/video container	                      |	video/3gpp2; audio/3gpp2 if it doesn't contain video
  *  |   .7z       | 7-zip archive	                                    |	application/x-7z-compressed
  */
-enum JammerRequestContentTypes(fileExtension: String, mimeTypeValue: String, resourceDirectoryName:String) {
+enum JammerRequestContentTypes(fileExtension: String, mimeTypeValue: String, resourceDirectoryName: String) {
   case JS extends JammerRequestContentTypes("js", "text/javascript", "scripts")
   case CSS extends JammerRequestContentTypes("css", "text/css", "styles")
 
   def toExtension: String = fileExtension
-  def toMime: String = mimeTypeValue
+
   def toDirectoryName: String = resourceDirectoryName
+
+  def toContentType = ContentType(
+    this.toMediaType,
+    HttpCharsets.`UTF-8`
+  )
 
   def toMediaType = {
     var mimeSub = this.toMime.split("/").last
@@ -93,9 +98,7 @@ enum JammerRequestContentTypes(fileExtension: String, mimeTypeValue: String, res
       fileExtensions = List("js")
     )
   }
-  def toContentType = ContentType(
-    this.toMediaType,
-    HttpCharsets.`UTF-8`
-  )
+
+  def toMime: String = mimeTypeValue
 }
 

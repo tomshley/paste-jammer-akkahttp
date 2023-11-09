@@ -5,7 +5,7 @@ import tomshley.brands.global.tware.tech.product.paste.common.models.DependencyM
 import tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{JammerParsedRequest, JammerRequestMatch}
 import tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
 
-sealed trait ParseJammerRequestMatch extends IncomingPort[JammerRequestMatch, JammerParsedRequest]{
+sealed trait ParseJammerRequestMatch extends IncomingPort[JammerRequestMatch, JammerParsedRequest] {
   override def execute(inboundModel: JammerRequestMatch): JammerParsedRequest = {
     JammerParsedRequest(
       inboundModel.jammerRequest,

@@ -7,7 +7,7 @@ import scala.concurrent.Future
 
 
 case class JammerResponse(
-                          jammerRequest: JammerRequest,
-                          jammerParsedContentType: JammerRequestContentTypes,
-                          jammerResponseBody: Future[String]
-                        ) extends IncomingModel
+                           jammerRequest: JammerRequest,
+                           jammerParsedContentType: JammerRequestContentTypes,
+                           jammerResponseBody: Future[String]
+                         ) extends IncomingModel
