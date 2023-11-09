@@ -4,5 +4,6 @@ import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.Incom
 
 
 case class JammerRequest(
-                          jamPathStringWithExt: String
+                          jamBuildStampURLPart: Long,
+                          jamPathStringWithExtURLPart: String
                         ) extends IncomingModel

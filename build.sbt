@@ -9,7 +9,10 @@ lazy val jammerProject = publishableProject(jammerProjectName, Some(file(".")))
   .enablePlugins(ProjectTemplatePlugin, ProjectsHelperPlugin, ProjectStructurePlugin, LibProjectAkkaHttpPlugin, LibManagedProjectPlugin)
   .settings(
     name := jammerProjectName,
-    organization := pasteLibOrgName
+    organization := pasteLibOrgName,
+    libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-http-caching" % "10.6.0-M1"
+    )
   )
   .dependsOn(
     commonProjectRef

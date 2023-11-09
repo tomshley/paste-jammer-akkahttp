@@ -8,6 +8,7 @@ import tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.con
 sealed trait ParseJammerRequestMatch extends IncomingPort[JammerRequestMatch, JammerParsedRequest]{
   override def execute(inboundModel: JammerRequestMatch): JammerParsedRequest = {
     JammerParsedRequest(
+      inboundModel.jammerRequest,
       JammerRequestContentTypes.values.find(
         _.toExtension == inboundModel.fileExtension
       ).get,

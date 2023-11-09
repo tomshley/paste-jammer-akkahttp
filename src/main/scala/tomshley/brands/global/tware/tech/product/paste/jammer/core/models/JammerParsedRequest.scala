@@ -6,6 +6,7 @@ import tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.con
 
 
 case class JammerParsedRequest(
+                                jammerRequest: JammerRequest,
                                 supportedContentTypes: JammerRequestContentTypes,
                                 jamParts: Seq[DependencyModel]
                               ) extends IncomingModel with Model

@@ -5,10 +5,11 @@ import tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{Jamme
 
 sealed trait JammerRequestMatched extends IncomingPort[JammerRequest, JammerRequestMatch]{
   override def execute(inboundModel: JammerRequest): JammerRequestMatch = {
-    lazy val fileExtension = inboundModel.jamPathStringWithExt.split("\\.").last
+    lazy val fileExtension = inboundModel.jamPathStringWithExtURLPart.split("\\.").last
     JammerRequestMatch(
+      inboundModel,
       fileExtension,
-      inboundModel.jamPathStringWithExt.split(s"\\.${fileExtension}").head
+      inboundModel.jamPathStringWithExtURLPart.split(s"\\.${fileExtension}").head
     )
   }
 }
