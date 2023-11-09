@@ -1,7 +1,6 @@
 package tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.Directives.*
 import akka.stream.scaladsl.{Concat, Flow, Source, StreamConverters}
 import akka.util.ByteString
