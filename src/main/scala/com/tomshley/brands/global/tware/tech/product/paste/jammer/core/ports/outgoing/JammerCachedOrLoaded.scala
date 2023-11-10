@@ -3,13 +3,13 @@ package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.ou
 import akka.actor.ActorSystem
 import akka.http.caching.LfuCache
 import akka.http.caching.scaladsl.{Cache, CachingSettings}
-import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, PortAsyncExecution}
+import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, OutgoingPort, PortAsyncExecution}
 import com.tomshley.brands.global.tware.tech.product.paste.common.config.PasteCommonConfigKeys
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{JammerResponse, JammerSourcedDependencies}
 
 import scala.concurrent.ExecutionContext
 
-sealed trait JammerCachedOrLoaded extends IncomingPort[JammerSourcedDependencies, JammerResponse] with PortAsyncExecution[JammerSourcedDependencies, JammerResponse] {
+sealed trait JammerCachedOrLoaded extends OutgoingPort[JammerSourcedDependencies, JammerResponse] with PortAsyncExecution[JammerSourcedDependencies, JammerResponse] {
   private lazy val defaultCachingSettings = CachingSettings(system)
   private lazy val lfuCacheSettings = defaultCachingSettings.lfuCacheSettings
     .withInitialCapacity(PasteCommonConfigKeys.HTTP_LFU_CACHE_INITIAL_SIZE.toValue.toInt)
