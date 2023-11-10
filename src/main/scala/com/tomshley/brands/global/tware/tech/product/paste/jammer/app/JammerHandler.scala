@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.PathMatchers.LongNumber
 import akka.http.scaladsl.server.{Directives, Route}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfuture.http.routing.AkkaRestHandler
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.JammerRequest
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.{JammerRequestMatched, ParseJammerRequestMatch, SinkJammerDependency}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.{MatchJammerRequest, ParseJammerRequestMatch, SinkJammerDependency}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.JammerCachedOrLoaded
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
 
@@ -31,7 +31,7 @@ sealed trait JammerHandler extends AkkaRestHandler {
         extractExecutionContext { implicit executor =>
           lazy val jammerParsedMatch =
             ParseJammerRequestMatch.execute(
-              JammerRequestMatched.execute(
+              MatchJammerRequest.execute(
                 JammerRequest(
                   pasteStamp,
                   pastePathWithExt

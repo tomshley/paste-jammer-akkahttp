@@ -3,7 +3,7 @@ package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.in
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.IncomingPort
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{JammerRequest, JammerRequestMatch}
 
-sealed trait JammerRequestMatched extends IncomingPort[JammerRequest, JammerRequestMatch] {
+sealed trait MatchJammerRequest extends IncomingPort[JammerRequest, JammerRequestMatch] {
   override def execute(inboundModel: JammerRequest): JammerRequestMatch = {
     lazy val fileExtension = inboundModel.jamPathStringWithExtURLPart.split("\\.").last
     JammerRequestMatch(
@@ -14,4 +14,4 @@ sealed trait JammerRequestMatched extends IncomingPort[JammerRequest, JammerRequ
   }
 }
 
-object JammerRequestMatched extends JammerRequestMatched
+object MatchJammerRequest extends MatchJammerRequest
