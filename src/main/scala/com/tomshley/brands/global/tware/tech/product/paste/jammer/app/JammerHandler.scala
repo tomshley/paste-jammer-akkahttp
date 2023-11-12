@@ -20,6 +20,10 @@ import java.nio.file.{Files, Paths}
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
+import com.yahoo.platform.yui.compressor.*
+import com.google.javascript.*
+import com.googlecode.htmlcompressor.*
+
 enum SupportedPasteAssetTypes:
   case JS, CSS, LESS
 
@@ -111,11 +115,14 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
           val source = StreamConverters.fromInputStream(() => FileInputStream(moduleFileAbsolutePath))
 
           val result: Future[IOResult] = source.via {
-            Flow[ByteString].map {
-              _.map {
-                  _.toChar.toByte
-                }
-                .utf8String.toUpperCase()
+            Flow[ByteString].map { byteString =>
+              byteString.map { byte =>
+                  byte.toChar.toByte
+                }.utf8String.toUpperCase()
+            }
+          }.via{
+            Flow[String].map { str =>
+              str.toLowerCase()
             }
           }.map(t => ByteString(t)).runWith {
             Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
