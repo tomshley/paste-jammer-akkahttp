@@ -1,7 +1,7 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
 
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.IncomingPort
-import com.tomshley.brands.global.tware.tech.product.paste.common.models.DependencyModel
+import com.tomshley.brands.global.tware.tech.product.paste.common.models.Module
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{JammerParsedRequest, JammerRequestMatch}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
 
@@ -13,9 +13,10 @@ sealed trait ParseJammerRequestMatch extends IncomingPort[JammerRequestMatch, Ja
         _.toExtension == inboundModel.fileExtension
       ).get,
       inboundModel.jamPathString.split(",").map(s =>
-        DependencyModel(
+        Module(
           s,
-          0.0
+          0.0,
+          Seq()
         )
       )
     )
