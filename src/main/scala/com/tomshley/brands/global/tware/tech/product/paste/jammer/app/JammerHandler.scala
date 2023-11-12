@@ -1,5 +1,6 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.app
 
+import akka.{Done, NotUsed}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.*
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
@@ -7,7 +8,7 @@ import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.PathMatchers.LongNumber
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.stream.IOResult
-import akka.stream.scaladsl.{FileIO, Flow, StreamConverters}
+import akka.stream.scaladsl.{FileIO, Flow, Sink, Source, StreamConverters}
 import akka.util.ByteString
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfuture.http.routing.AkkaRestHandler
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.JammerRequest
@@ -15,14 +16,20 @@ import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.inc
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.JammerCachedOrLoaded
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.{JammerConfigKeys, JammerRequestContentTypes}
 
-import java.io.{File, FileInputStream}
+import java.io.{File, FileInputStream, FileOutputStream, InputStreamReader, OutputStreamWriter}
 import java.nio.file.{Files, Paths}
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-
 import com.yahoo.platform.yui.compressor.*
-import com.google.javascript.*
 import com.googlecode.htmlcompressor.*
+import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.simplelogger.{SLogger, SimpleLoggerSeverity}
+import org.mozilla.javascript.{ErrorReporter, EvaluatorException}
+import com.google.javascript.jscomp.{CompilerOptions, JSError, SourceFile, Compiler as ClosureCompiler}
+import com.google.javascript.rhino.StaticSourceFile.SourceKind
+
+import scala.language.postfixOps
+
+
 
 enum SupportedPasteAssetTypes:
   case JS, CSS, LESS
@@ -99,6 +106,38 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
     //    matchedFiles
   }
 
+  class YUIOptions {
+    var charset = "UTF-8"
+    var lineBreakPos: Int = -1
+    var munge = true
+    var verbose = false
+    var preserveAllSemiColons = false
+    var disableOptimizations = false
+  }
+
+  class YuiErrorReporter extends ErrorReporter with SLogger{
+    def logit(level: Any , message: String, sourceName: String, line: Int, lineSource: String, lineOffset: Int) = {
+      logger.debug(message)
+      //      log.log(level, "%s in %s:%d,%d at %s".format(message, sourceName, line, lineOffset, lineSource))
+    }
+
+    def error(message: String, sourceName: String, line: Int, lineSource: String, lineOffset: Int) = {
+      logger.error(message)
+//      logit(Level.Error, message, sourceName, line, lineSource, lineOffset)
+    }
+
+    def runtimeError(message: String, sourceName: String, line: Int, lineSource: String, lineOffset: Int): EvaluatorException = {
+      error(message, sourceName, line, lineSource, lineOffset)
+      new EvaluatorException(message, sourceName, line, lineSource, lineOffset)
+    }
+
+    def warning(message: String, sourceName: String, line: Int, lineSource: String, lineOffset: Int) = {
+      logger.warn(message)
+//      logit(Level.Warn, message, sourceName, line, lineSource, lineOffset)
+    }
+
+  }
+
   override lazy val routes: Seq[Route] = Seq(jammerGet, jamAll)
   private lazy val jamAll: Route =
     get {
@@ -108,28 +147,121 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
         extractExecutionContext { implicit executor =>
           given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
 
+
+          val yuiEncoding = "UTF-8"
+//
+//          val yuiNomunge = false
+//
+//          val yuiJswarn = true
+//
+//          val yuiPreserveAllSemiColons = false
+//
+//          val yuiDisableOptimizations = false
+//
+//          val lineBreaks = -1
+
           val moduleFileAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts/paste.js"
           val moduleFileBuildAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts/.paste_build/paste.v1.0.min.js"
           val moduleFileBuildAbsolutePathPath = Paths.get(moduleFileBuildAbsolutePath)
+          val compressorFuture: Future[String] = Future {
 
-          val source = StreamConverters.fromInputStream(() => FileInputStream(moduleFileAbsolutePath))
+//            val errorReporter = new YuiErrorReporter()
+//            val in = new InputStreamReader(new FileInputStream(moduleFileAbsolutePath), yuiEncoding)
+//            val out2 = new OutputStreamWriter(new FileOutputStream(moduleFileBuildAbsolutePathPath.toFile), yuiEncoding)
 
-          val result: Future[IOResult] = source.via {
-            Flow[ByteString].map { byteString =>
-              byteString.map { byte =>
-                  byte.toChar.toByte
-                }.utf8String.toUpperCase()
-            }
-          }.via{
-            Flow[String].map { str =>
-              str.toLowerCase()
-            }
-          }.map(t => ByteString(t)).runWith {
+            lazy val options = new CompilerOptions()
+
+//            CompilerOptions
+
+            val compiler = new ClosureCompiler
+
+            val result = compiler.compile(
+              SourceFile.fromCode("fuck", ""),
+              SourceFile.fromFile(moduleFileAbsolutePath),
+              options
+            )
+
+            val errors = result.errors
+            val warnings = result.warnings
+
+            //            val compressor = new JavaScriptCompressor(in, errorReporter)
+//
+//            compressor.compress(out2, -1, true, true, true, true)
+//            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
+
+            val compilerResult = compiler.toSource
+
+            compilerResult
+          }
+
+          val source: Source[String, NotUsed] = Source.future(compressorFuture)
+          val sink: Sink[String, Future[Done]] = Sink.foreach((s: String) => println(s))
+
+//          val done: Future[Done] = source.runWith(sink) //10
+          val done: Future[IOResult] = source.map(s => ByteString(s)).runWith{
             Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
             FileIO.toPath(moduleFileBuildAbsolutePathPath)
           }
 
-          onComplete(result) {
+          //          val source = StreamConverters.fromInputStream(() => FileInputStream(moduleFileAbsolutePath))
+
+
+//          lazy val source = StreamConverters.fromInputStream(() => FileInputStream(moduleFileAbsolutePath))
+          lazy val options = new CompilerOptions()
+
+
+//          val result: Future[IOResult] = source.via {
+//            Flow[ByteString].map { byteString =>
+//              val codeUTF8 = byteString.map { byte =>
+//                byte.toChar.toByte
+//              }.utf8String
+//
+//
+//
+//              //            CompilerOptions
+//              val sourceFile = SourceFile.fromCode(moduleFileAbsolutePath, codeUTF8, SourceKind.WEAK)
+//
+//              val compiler = new ClosureCompiler
+//
+//              val result = compiler.compile(
+//                SourceFile.fromCode("fuck", ""),
+//                sourceFile,
+//                options
+//              )
+//
+//
+//              val errors = result.errors
+//              val warnings = result.warnings
+//
+//              val compilerResult = compiler.toSource
+//
+//              compilerResult
+//
+//            }
+//          }.map(t => ByteString(t)).runWith {
+//            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
+//            FileIO.toPath(moduleFileBuildAbsolutePathPath)
+//          }
+//          val result: Future[IOResult] = source.via {
+//            Flow[ByteString].map { byteString =>
+//              lazy val yuiContent = byteString.map { byte =>
+//                  byte.toChar.toByte
+//                }.utf8String
+//
+//
+//
+//            }
+//          }
+////            .via{
+////            Flow[String].map { str =>
+////              str.toLowerCase()
+////            }
+//          }.map(t => ByteString(t)).runWith {
+//            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
+//            FileIO.toPath(moduleFileBuildAbsolutePathPath)
+//          }
+
+          onComplete(done) {
             case Success(resultValue) => complete(
               HttpResponse(
                 entity = HttpEntity(
