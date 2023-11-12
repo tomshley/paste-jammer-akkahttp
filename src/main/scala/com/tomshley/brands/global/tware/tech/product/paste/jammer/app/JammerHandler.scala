@@ -118,7 +118,7 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
                 .utf8String.toUpperCase()
             }
           }.map(t => ByteString(t)).runWith {
-            Files.createDirectories(moduleFileBuildAbsolutePathPath)
+            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
             FileIO.toPath(moduleFileBuildAbsolutePathPath)
           }
 
