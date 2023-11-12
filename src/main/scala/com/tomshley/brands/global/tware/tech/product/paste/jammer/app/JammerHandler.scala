@@ -105,7 +105,7 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
           given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
 
           val moduleFileAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts/paste.js"
-          val moduleFileBuildAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts/paste2.js"
+          val moduleFileBuildAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts/_paste_build/paste.js"
           val moduleFileBuildAbsolutePathPath = Paths.get(moduleFileBuildAbsolutePath)
 
           val source = StreamConverters.fromInputStream(() => FileInputStream(moduleFileAbsolutePath))
