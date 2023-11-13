@@ -1,66 +1,49 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.app
 
-import akka.{Done, NotUsed}
+import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.*
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.PathMatchers.LongNumber
 import akka.http.scaladsl.server.{Directives, Route}
-import akka.stream.IOResult
-import akka.stream.scaladsl.{FileIO, Flow, Sink, Source, StreamConverters}
-import akka.util.ByteString
+import akka.stream.scaladsl.Source
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfuture.http.routing.AkkaRestHandler
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.JammerRequest
+import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.simplelogger.{SLogger, SimpleLoggerSeverity}
+import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.util.FilesUtil
+import com.tomshley.brands.global.tware.tech.product.paste.common.config.PasteCommonConfigKeys
+import com.tomshley.brands.global.tware.tech.product.paste.common.models.SupportedPasteAssetTypes
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.Request
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.{MatchJammerRequest, ParseJammerRequestMatch, SinkJammerDependency}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.JammerCachedOrLoaded
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.{JammerConfigKeys, JammerRequestContentTypes}
-
-import java.io.{File, FileInputStream, FileOutputStream, InputStreamReader, OutputStreamWriter}
-import java.nio.file.{Files, Paths}
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
-import com.yahoo.platform.yui.compressor.*
-import com.googlecode.htmlcompressor.*
-import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.simplelogger.{SLogger, SimpleLoggerSeverity}
 import org.mozilla.javascript.{ErrorReporter, EvaluatorException}
-import com.google.javascript.jscomp.{CompilerOptions, JSError, SourceFile, Compiler as ClosureCompiler}
-import com.google.javascript.rhino.StaticSourceFile.SourceKind
 
+import java.io.File
+import java.net.URL
+import java.nio.file.*
+import scala.concurrent.Future
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
-
-
-enum SupportedPasteAssetTypes:
-  case JS, CSS, LESS
 
 trait ModulePrimer[T <: SupportedPasteAssetTypes]
 
 object JammerHandler extends JammerHandler
 
-sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPasteAssetTypes.JS.type] {
+sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPasteAssetTypes.JS.type] with FilesUtil {
 
-  def findFiles(fileFilter: (File) => Boolean = (f) => true)(f: File): List[File] = {
-    val ss = f.list()
-    val list = if (ss == null) {
-      Nil
-    } else {
-      ss.toList.sorted
-    }
-    val visible = list.filter(_.charAt(0) != '.')
-    val these = visible.map(new File(f, _))
-    these.filter(fileFilter) ++ these.filter(_.isDirectory).flatMap(findFiles(fileFilter))
-  }
+
 
   // /paste/1433279379/jawbone.utils.debounce%2Bv1.0%2Cpaste.cookie%2Bv1.0%2Cpaste.guid%2Bv1.0%2Cpaste.io.formdata%2Bv1.0%2Cpaste.oop%2Bv1.0%2Cpaste.util%2Bv1.0%2Cup.wellness.externals%2Bv1.0%2Cpaste.dom%2Bv1.0%2Cpaste.event%2Bv3.0%2Cpaste.has%2Bv3.0%2Cpaste.io%2Bv1.0%2Cjawbone.ui.responsive%2Bv1.0%2Cup.wellness.modals%2Bv1.0%2Cup.common.confirm_url_link%2Bv1.0.js
   def jammerDev = {
     //    val resources = getClass.getClassLoader.getResource(s"paste/scripts/paste.js")
 
     //    val resources = getClass.getClassLoader.getResources.andThen(x => x.)
-    val moduleDirectoryAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts"
-    val moduleDirectoryBuildAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts/_paste_build"
-    val moduleDirectory = new File(moduleDirectoryAbsolutePath)
-    val matchedFiles = findFiles(_.getName endsWith ".js")(moduleDirectory)
+    //    val moduleDirectoryAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts"
+    //    val moduleDirectoryBuildAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts/_paste_build"
+    //    val moduleDirectory = new File(moduleDirectoryAbsolutePath)
+    //    val matchedFiles = findFiles(_.getName endsWith ".js")(moduleDirectory)
 
     //    val source: Source[ByteString, OutputStream] = StreamConverters.asOutputStream()
     //    val sink: Sink[ByteString, Future[ByteString]] = Sink.fold[ByteString, ByteString](ByteString.empty)(_ ++ _)
@@ -115,15 +98,15 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
     var disableOptimizations = false
   }
 
-  class YuiErrorReporter extends ErrorReporter with SLogger{
-    def logit(level: Any , message: String, sourceName: String, line: Int, lineSource: String, lineOffset: Int) = {
+  class YuiErrorReporter extends ErrorReporter with SLogger {
+    def logit(level: Any, message: String, sourceName: String, line: Int, lineSource: String, lineOffset: Int) = {
       logger.debug(message)
       //      log.log(level, "%s in %s:%d,%d at %s".format(message, sourceName, line, lineOffset, lineSource))
     }
 
     def error(message: String, sourceName: String, line: Int, lineSource: String, lineOffset: Int) = {
       logger.error(message)
-//      logit(Level.Error, message, sourceName, line, lineSource, lineOffset)
+      //      logit(Level.Error, message, sourceName, line, lineSource, lineOffset)
     }
 
     def runtimeError(message: String, sourceName: String, line: Int, lineSource: String, lineOffset: Int): EvaluatorException = {
@@ -133,9 +116,35 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
 
     def warning(message: String, sourceName: String, line: Int, lineSource: String, lineOffset: Int) = {
       logger.warn(message)
-//      logit(Level.Warn, message, sourceName, line, lineSource, lineOffset)
+      //      logit(Level.Warn, message, sourceName, line, lineSource, lineOffset)
     }
 
+  }
+
+  def listPaths(folder: String) = {
+    var myResourcePath = resourcePath(folder)
+    //    Files.list(resourcePath(folder))
+    //      .filter(p ⇒ Files.isRegularFile(p, Array[LinkOption](): _*))
+    //      .toList.asScala.toSeq
+    myResourcePath
+  }
+
+  private def resourcePath(filename: String) = {
+    val loader = this.getClass.getClassLoader
+    var url = loader.getResource(filename)
+    var filePath: Array[String] = null
+    var protocol = url.getProtocol
+    if (protocol == "jar") {
+      url = new URL(url.getPath)
+      protocol = url.getProtocol
+    }
+    if (protocol == "file") {
+      val pathArray = url.getPath.split("!")
+      filePath = pathArray(0).split("/", 2)
+    }
+    val required = new File(filePath(1))
+
+    required
   }
 
   override lazy val routes: Seq[Route] = Seq(jammerGet, jamAll)
@@ -149,119 +158,176 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
 
 
           val yuiEncoding = "UTF-8"
-//
-//          val yuiNomunge = false
-//
-//          val yuiJswarn = true
-//
-//          val yuiPreserveAllSemiColons = false
-//
-//          val yuiDisableOptimizations = false
-//
-//          val lineBreaks = -1
+          //
+          //          val yuiNomunge = false
+          //
+          //          val yuiJswarn = true
+          //
+          //          val yuiPreserveAllSemiColons = false
+          //
+          //          val yuiDisableOptimizations = false
+          //
+          //          val lineBreaks = -1
 
-          val moduleFileAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts/paste.js"
-          val moduleFileBuildAbsolutePath = "/Users/sgoggles/Library/Mobile Documents/com~apple~CloudDocs/Downloads/paste/paste-resources/src/paste/scripts/.paste_build/paste.v1.0.min.js"
-          val moduleFileBuildAbsolutePathPath = Paths.get(moduleFileBuildAbsolutePath)
-          val compressorFuture: Future[String] = Future {
+          case class FileGatheringModel(absPaths: Seq[String], buildDirNameOption: Option[String] = None)
+          case class FileTargetModel(path: Path, buildDirPath: Path)
+          case class ResourceGatheringModel(pasteDirName: String = PasteCommonConfigKeys.PASTE_ROOT.toValue,
+                                            projectResourcesDirNames: Seq[String] = Seq(),
+                                            projectResourcesDirNameFallbackOption: Option[String] = None
+                                           )
 
-//            val errorReporter = new YuiErrorReporter()
-//            val in = new InputStreamReader(new FileInputStream(moduleFileAbsolutePath), yuiEncoding)
-//            val out2 = new OutputStreamWriter(new FileOutputStream(moduleFileBuildAbsolutePathPath.toFile), yuiEncoding)
+          def gatheredResources(resourceGatheringModel: ResourceGatheringModel = ResourceGatheringModel()) = {
+            lazy val fallbackDirName = resourceGatheringModel.projectResourcesDirNameFallbackOption.fold(
+              ifEmpty = ""
+            )(dirName => dirName)
+            
+            lazy val regex = s".+\\.(${SupportedPasteAssetTypes.values.map(t => t.toFileExtension).distinct.mkString("|")})$$".r
 
-            lazy val options = new CompilerOptions()
-
-//            CompilerOptions
-
-            val compiler = new ClosureCompiler
-
-            val result = compiler.compile(
-              SourceFile.fromCode("fuck", ""),
-              SourceFile.fromFile(moduleFileAbsolutePath),
-              options
+            FileGatheringModel(
+              (resourceGatheringModel.projectResourcesDirNames ++ Seq(resourceGatheringModel.pasteDirName, fallbackDirName)).distinct.map {resourceName =>
+                getClass.getClassLoader.getResource(resourceName)
+              }.map { resourceURL =>
+                new File(resourceURL.toURI)
+              }.map(
+                _.getAbsoluteFile
+              ).flatMap { resourceFile =>
+                recursiveFileList(_.getName matches regex.regex)(resourceFile)
+              }.map(
+                _.getAbsolutePath
+              )
             )
-
-            val errors = result.errors
-            val warnings = result.warnings
-
-            //            val compressor = new JavaScriptCompressor(in, errorReporter)
-//
-//            compressor.compress(out2, -1, true, true, true, true)
-//            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
-
-            val compilerResult = compiler.toSource
-
-            compilerResult
+          }
+          
+          def buildDirectoryGathering(fileGatheringModel: FileGatheringModel): Iterator[FileTargetModel] = {
+            fileGatheringModel.absPaths
+              .map(
+                Paths.get(_)
+              )
+              .map(p =>
+                FileTargetModel(
+                  p,
+                  Paths.get(Seq(
+                    p.getParent,
+                    fileGatheringModel.buildDirNameOption.fold(
+                      ifEmpty = PasteCommonConfigKeys.BUILD_DIR_NAME.toValue
+                    )(name => name)
+                  ).mkString("/"))
+                )
+              ).iterator
           }
 
-          val source: Source[String, NotUsed] = Source.future(compressorFuture)
-          val sink: Sink[String, Future[Done]] = Sink.foreach((s: String) => println(s))
+          val fileGatheringSource = Source.fromIterator(() =>
+            buildDirectoryGathering(
+              gatheredResources()
+            )
+          )
 
-//          val done: Future[Done] = source.runWith(sink) //10
-          val done: Future[IOResult] = source.map(s => ByteString(s)).runWith{
-            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
-            FileIO.toPath(moduleFileBuildAbsolutePathPath)
-          }
+          val createBuildDirectories: Future[Done] = fileGatheringSource.map(p => {
+            println(p.buildDirPath)
+            Files.createDirectories(
+              p.buildDirPath
+            )
+          }).run()
+
+          //          val compressorFuture: Future[String] = Future {
+          //
+          //            //            val errorReporter = new YuiErrorReporter()
+          //            //            val in = new InputStreamReader(new FileInputStream(moduleFileAbsolutePath), yuiEncoding)
+          //            //            val out2 = new OutputStreamWriter(new FileOutputStream(moduleFileBuildAbsolutePathPath.toFile), yuiEncoding)
+          //
+          //            lazy val options = new CompilerOptions()
+          //
+          //            //            CompilerOptions
+          //
+          //            val compiler = new ClosureCompiler
+          //
+          //            val result = compiler.compile(
+          //              SourceFile.fromCode("fuck", ""),
+          //              SourceFile.fromFile(moduleFileAbsolutePath),
+          //              options
+          //            )
+          //
+          //            val errors = result.errors
+          //            val warnings = result.warnings
+          //
+          //            //            val compressor = new JavaScriptCompressor(in, errorReporter)
+          //            //
+          //            //            compressor.compress(out2, -1, true, true, true, true)
+          //            //            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
+          //
+          //            val compilerResult = compiler.toSource
+          //
+          //            compilerResult
+          //          }
+          //
+          //          val source: Source[String, NotUsed] = Source.future(compressorFuture)
+          //          val sink: Sink[String, Future[Done]] = Sink.foreach((s: String) => println(s))
+          //
+          //          //          val done: Future[Done] = source.runWith(sink) //10
+          //          val done: Future[IOResult] = source.map(s => ByteString(s)).runWith {
+          //            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
+          //            FileIO.toPath(moduleFileBuildAbsolutePathPath)
+          //          }
 
           //          val source = StreamConverters.fromInputStream(() => FileInputStream(moduleFileAbsolutePath))
 
 
-//          lazy val source = StreamConverters.fromInputStream(() => FileInputStream(moduleFileAbsolutePath))
-          lazy val options = new CompilerOptions()
+          //          lazy val source = StreamConverters.fromInputStream(() => FileInputStream(moduleFileAbsolutePath))
+          //          lazy val options = new CompilerOptions()
 
 
-//          val result: Future[IOResult] = source.via {
-//            Flow[ByteString].map { byteString =>
-//              val codeUTF8 = byteString.map { byte =>
-//                byte.toChar.toByte
-//              }.utf8String
-//
-//
-//
-//              //            CompilerOptions
-//              val sourceFile = SourceFile.fromCode(moduleFileAbsolutePath, codeUTF8, SourceKind.WEAK)
-//
-//              val compiler = new ClosureCompiler
-//
-//              val result = compiler.compile(
-//                SourceFile.fromCode("fuck", ""),
-//                sourceFile,
-//                options
-//              )
-//
-//
-//              val errors = result.errors
-//              val warnings = result.warnings
-//
-//              val compilerResult = compiler.toSource
-//
-//              compilerResult
-//
-//            }
-//          }.map(t => ByteString(t)).runWith {
-//            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
-//            FileIO.toPath(moduleFileBuildAbsolutePathPath)
-//          }
-//          val result: Future[IOResult] = source.via {
-//            Flow[ByteString].map { byteString =>
-//              lazy val yuiContent = byteString.map { byte =>
-//                  byte.toChar.toByte
-//                }.utf8String
-//
-//
-//
-//            }
-//          }
-////            .via{
-////            Flow[String].map { str =>
-////              str.toLowerCase()
-////            }
-//          }.map(t => ByteString(t)).runWith {
-//            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
-//            FileIO.toPath(moduleFileBuildAbsolutePathPath)
-//          }
+          //          val result: Future[IOResult] = source.via {
+          //            Flow[ByteString].map { byteString =>
+          //              val codeUTF8 = byteString.map { byte =>
+          //                byte.toChar.toByte
+          //              }.utf8String
+          //
+          //
+          //
+          //              //            CompilerOptions
+          //              val sourceFile = SourceFile.fromCode(moduleFileAbsolutePath, codeUTF8, SourceKind.WEAK)
+          //
+          //              val compiler = new ClosureCompiler
+          //
+          //              val result = compiler.compile(
+          //                SourceFile.fromCode("fuck", ""),
+          //                sourceFile,
+          //                options
+          //              )
+          //
+          //
+          //              val errors = result.errors
+          //              val warnings = result.warnings
+          //
+          //              val compilerResult = compiler.toSource
+          //
+          //              compilerResult
+          //
+          //            }
+          //          }.map(t => ByteString(t)).runWith {
+          //            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
+          //            FileIO.toPath(moduleFileBuildAbsolutePathPath)
+          //          }
+          //          val result: Future[IOResult] = source.via {
+          //            Flow[ByteString].map { byteString =>
+          //              lazy val yuiContent = byteString.map { byte =>
+          //                  byte.toChar.toByte
+          //                }.utf8String
+          //
+          //
+          //
+          //            }
+          //          }
+          ////            .via{
+          ////            Flow[String].map { str =>
+          ////              str.toLowerCase()
+          ////            }
+          //          }.map(t => ByteString(t)).runWith {
+          //            Files.createDirectories(moduleFileBuildAbsolutePathPath.getParent)
+          //            FileIO.toPath(moduleFileBuildAbsolutePathPath)
+          //          }
 
-          onComplete(done) {
+          onComplete(createBuildDirectories) {
             case Success(resultValue) => complete(
               HttpResponse(
                 entity = HttpEntity(
@@ -286,7 +352,7 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
           lazy val jammerParsedMatch =
             ParseJammerRequestMatch.execute(
               MatchJammerRequest.execute(
-                JammerRequest(
+                Request(
                   pasteStamp,
                   pastePathWithExt
                 )

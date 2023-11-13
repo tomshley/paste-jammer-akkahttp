@@ -1,12 +1,12 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
 
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.IncomingPort
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{JammerRequest, JammerRequestMatch}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{Request, RequestMatch}
 
-sealed trait MatchJammerRequest extends IncomingPort[JammerRequest, JammerRequestMatch] {
-  override def execute(inboundModel: JammerRequest): JammerRequestMatch = {
+sealed trait MatchJammerRequest extends IncomingPort[Request, RequestMatch] {
+  override def execute(inboundModel: Request): RequestMatch = {
     lazy val fileExtension = inboundModel.jamPathStringWithExtURLPart.split("\\.").last
-    JammerRequestMatch(
+    RequestMatch(
       inboundModel,
       fileExtension,
       inboundModel.jamPathStringWithExtURLPart.split(s"\\.${fileExtension}").head

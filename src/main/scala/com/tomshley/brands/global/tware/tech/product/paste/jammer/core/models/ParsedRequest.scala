@@ -5,8 +5,8 @@ import com.tomshley.brands.global.tware.tech.product.paste.common.models.Module
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
 
 
-case class JammerParsedRequest(
-                                jammerRequest: JammerRequest,
-                                supportedContentTypes: JammerRequestContentTypes,
-                                jamParts: Seq[Module]
+case class ParsedRequest(
+                          jammerRequest: Request,
+                          supportedContentTypes: JammerRequestContentTypes,
+                          jamParts: Seq[Module]
                               ) extends IncomingModel with Model

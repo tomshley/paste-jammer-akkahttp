@@ -5,11 +5,11 @@ import akka.http.caching.LfuCache
 import akka.http.caching.scaladsl.{Cache, CachingSettings}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, OutgoingPort, PortAsyncExecution}
 import com.tomshley.brands.global.tware.tech.product.paste.common.config.PasteCommonConfigKeys
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{JammerResponse, JammerSourcedDependencies}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{Response, SourcedDependencies}
 
 import scala.concurrent.ExecutionContext
 
-sealed trait JammerCachedOrLoaded extends OutgoingPort[JammerSourcedDependencies, JammerResponse] with PortAsyncExecution[JammerSourcedDependencies, JammerResponse] {
+sealed trait JammerCachedOrLoaded extends OutgoingPort[SourcedDependencies, Response] with PortAsyncExecution[SourcedDependencies, Response] {
   private lazy val defaultCachingSettings = CachingSettings(system)
   private lazy val lfuCacheSettings = defaultCachingSettings.lfuCacheSettings
     .withInitialCapacity(PasteCommonConfigKeys.HTTP_LFU_CACHE_INITIAL_SIZE.toValue.toInt)
@@ -20,8 +20,8 @@ sealed trait JammerCachedOrLoaded extends OutgoingPort[JammerSourcedDependencies
 
   given system: ActorSystem = ActorSystem(PasteCommonConfigKeys.HTTP_LFU_CACHE_NAME.toValue)
 
-  override def executeAsync(inboundModel: JammerSourcedDependencies)(implicit ec: ExecutionContext): JammerResponse = {
-    JammerResponse(
+  override def executeAsync(inboundModel: SourcedDependencies)(implicit ec: ExecutionContext): Response = {
+    Response(
       inboundModel.jammerRequest,
       inboundModel.jammerParsedContentType,
       cachePaste.getOrLoad(
