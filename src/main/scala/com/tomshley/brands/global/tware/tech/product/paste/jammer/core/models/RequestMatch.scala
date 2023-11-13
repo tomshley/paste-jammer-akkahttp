@@ -6,4 +6,4 @@ case class RequestMatch(
                          jammerRequest: Request,
                          fileExtension: String,
                          jamPathString: String
-                             ) extends IncomingModel
+                       ) extends IncomingModel

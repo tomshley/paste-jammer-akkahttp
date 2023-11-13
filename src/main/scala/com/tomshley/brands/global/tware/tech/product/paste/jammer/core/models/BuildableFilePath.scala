@@ -6,4 +6,4 @@ import java.nio.file.Path
 
 case class BuildableFilePath(
                               path: Path, buildDirPath: Path
-) extends Model
+                            ) extends Model

@@ -10,4 +10,4 @@ case class SourcedDependencies(
                                 jammerRequest: Request,
                                 jammerParsedContentType: JammerRequestContentTypes,
                                 byteStringFuture: Future[ByteString]
-                                    ) extends IncomingModel
+                              ) extends IncomingModel

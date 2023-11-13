@@ -9,4 +9,4 @@ case class ParsedRequest(
                           jammerRequest: Request,
                           supportedContentTypes: JammerRequestContentTypes,
                           jamParts: Seq[Module]
-                              ) extends IncomingModel with Model
+                        ) extends IncomingModel with Model

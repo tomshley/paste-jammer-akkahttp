@@ -10,4 +10,4 @@ case class Response(
                      jammerRequest: Request,
                      jammerParsedContentType: JammerRequestContentTypes,
                      jammerResponseBody: Future[String]
-                         ) extends OutgoingModel
+                   ) extends OutgoingModel
