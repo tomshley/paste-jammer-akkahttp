@@ -5,6 +5,7 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{Port, PortAsyncExecution}
 import com.tomshley.brands.global.tware.tech.product.paste.common.config.PasteCommonConfigKeys
+import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PasteModule, PastePart}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.*
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
@@ -31,17 +32,18 @@ sealed trait EnsureBuildDirectories extends Port[ResourceFileDirectories, Future
       .map(
         Paths.get(_)
       )
-      .map(p =>
-        BuildableFilePath(
-          p,
-          Paths.get(Seq(
-            p.getParent,
-            fileGatheringModel.buildDirNameOption.fold(
-              ifEmpty = PasteCommonConfigKeys.BUILD_DIR_NAME.toValue
-            )(name => name)
-          ).mkString("/"))
+      .map{sourcePath =>
+        val pasteModule = PasteModule(
+          part=PastePart.apply(
+            sourcePath
+          ),
+          sourceFile=sourcePath.toFile
         )
-      ).iterator
+        BuildableFilePath(
+          pasteModule.sourceFile.toPath,
+          pasteModule.expectedOptimizedFile.toPath.getParent
+        )
+      }.iterator
   }
 
 }

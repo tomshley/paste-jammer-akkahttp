@@ -85,12 +85,12 @@ enum JammerRequestContentTypes(fileExtension: String, mimeTypeValue: String, res
 
   def toDirectoryName: String = resourceDirectoryName
 
-  def toContentType = ContentType(
+  def toContentType: ContentType.WithCharset = ContentType(
     this.toMediaType,
     HttpCharsets.`UTF-8`
   )
 
-  def toMediaType = {
+  def toMediaType: MediaType.WithOpenCharset = {
     var mimeSub = this.toMime.split("/").last
     MediaType.customWithOpenCharset(
       this.toMime.split(s"/${mimeSub}").head,

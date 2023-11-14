@@ -9,3 +9,5 @@ import com.yahoo.platform.yui.compressor.*
 sealed trait CompressDependency extends Port[PasteModule, PasteModule] {
   //  YUICompressor.main()
 }
+
+object CompressDependency extends CompressDependency
