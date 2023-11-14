@@ -51,7 +51,7 @@ sealed trait BuildTheJamManifest extends Port[FileGather, Future[Seq[PasteModule
           case _ => Seq()
 
         lastPastModuleOption match
-          case Some(value) => {
+          case Some(value) =>
 
             lazy val modulePart = nextPasteModuleMatch.pastedocMatch.pastePartType match
               case PastePartType.MODULE => PastePart(
@@ -68,7 +68,6 @@ sealed trait BuildTheJamManifest extends Port[FileGather, Future[Seq[PasteModule
               value.optimizedFileOption,
               value.parentBuildDirOption
             ))
-          }
           case None => Option.empty[PasteModule]
       }
     }.filter(

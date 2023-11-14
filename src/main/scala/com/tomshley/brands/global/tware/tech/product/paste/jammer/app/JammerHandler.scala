@@ -35,7 +35,7 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
     get {
       path(
         "paste2" / LongNumber
-      ) { (pasteStamp) =>
+      ) { pasteStamp =>
         extractExecutionContext { implicit executor =>
           onComplete(EnsureBuildDirectories.executeAsync(startingPoint)) {
             case Success(resultValue) => complete(
@@ -193,7 +193,7 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
     get {
       path(
         "paste3" / LongNumber
-      ) { (pasteStamp) =>
+      ) { pasteStamp =>
         extractExecutionContext { implicit executor =>
           //          onComplete(coalesce()) {
           onComplete(BuildTheJamManifest.executeAsync(gatheredResources)) {

@@ -93,7 +93,7 @@ enum JammerRequestContentTypes(fileExtension: String, mimeTypeValue: String, res
   def toMediaType: MediaType.WithOpenCharset = {
     var mimeSub = this.toMime.split("/").last
     MediaType.customWithOpenCharset(
-      this.toMime.split(s"/${mimeSub}").head,
+      this.toMime.split(s"""/$mimeSub""").head,
       mimeSub,
       fileExtensions = List("js")
     )
