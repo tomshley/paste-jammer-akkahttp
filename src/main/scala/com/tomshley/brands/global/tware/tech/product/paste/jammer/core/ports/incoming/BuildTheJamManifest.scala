@@ -1,11 +1,12 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
 
 import akka.actor.ActorSystem
-import akka.stream.scaladsl.{FileIO, Framing, Merge, Sink, Source}
+import akka.stream.scaladsl.{FileIO, Flow, Framing, Merge, Sink, Source}
 import akka.util.ByteString
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{Port, PortAsyncExecution}
+import com.tomshley.brands.global.tware.tech.product.paste.common.models
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{FileGather, BuildableFilePath}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.FileGather
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
 import java.nio.file.Paths
@@ -13,12 +14,33 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 sealed trait BuildTheJamManifest extends Port[FileGather, Future[Seq[PasteModule]]] with PortAsyncExecution[FileGather, Future[Seq[PasteModule]]] {
-  given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
-
   private lazy val pastedocSink = Sink.seq[PasteModule]
 
-  private def matchPastDocFlow(pasteModule: PasteModule) = Framing
-    .delimiter(ByteString(System.lineSeparator()), maximumFrameLength = 512, allowTruncation = true)
+  given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
+
+  override def executeAsync(inboundModel: FileGather)(implicit ec: ExecutionContext): Future[Seq[PasteModule]] = {
+    lazy val gatheredFiles = inboundModel.absPaths.map(
+      Paths.get(_)
+    ).map { path =>
+      PasteModule(
+        part = PastePart.apply(
+          path
+        ),
+        sourceFile = path.toFile
+      )
+    }
+    Source.combine(
+      gatheredFiles
+        .filter(pasteModule =>
+          inboundModel.supportedPasteAssetTypes.contains(pasteModule.part.pasteAssetType)
+        ).map(pasteModule =>
+          FileIO.fromPath(pasteModule.sourceFile.toPath).via(matchPastDocFlow(pasteModule))
+        )
+    )(Merge(_)).runWith(pastedocSink)
+  }
+
+  private def matchPastDocFlow(pasteModule: PasteModule) =
+    Framing.delimiter(ByteString(System.lineSeparator()), maximumFrameLength = 2048, allowTruncation = true)
     .filter { byteString =>
       PastedocExpression.JS_COMMENT.toRegex.findFirstMatchIn(byteString.utf8String).isDefined
     }.map { byteString =>
@@ -75,27 +97,6 @@ sealed trait BuildTheJamManifest extends Port[FileGather, Future[Seq[PasteModule
     ).map(
       _.get
     )
-
-  override def executeAsync(inboundModel: FileGather)(implicit ec: ExecutionContext): Future[Seq[PasteModule]] = {
-
-    Source.combine(
-      inboundModel.absPaths.map(
-        Paths.get(_)
-      ).map { path =>
-        PasteModule(
-          part = PastePart.apply(
-            path
-          ),
-          sourceFile = path.toFile
-        )
-      }.filter(
-        _.part.pasteAssetType == SupportedPasteAssetTypes.JS
-      ).filter(pasteModule =>
-        pasteModule.part.name == "oop" || pasteModule.part.name == "util" || pasteModule.part.name == "paste"
-      ).map(pasteModule =>
-        FileIO.fromPath(pasteModule.sourceFile.toPath).via(matchPastDocFlow(pasteModule))
-      ))(Merge(_)).runWith(pastedocSink)
-  }
 }
 
 object BuildTheJamManifest extends BuildTheJamManifest

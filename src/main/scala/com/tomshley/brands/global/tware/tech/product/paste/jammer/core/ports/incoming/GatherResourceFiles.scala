@@ -24,7 +24,7 @@ sealed trait GatherResourceFiles extends IncomingPort[ResourceFileDirectories, F
         _.getAbsoluteFile
       ).flatMap { resourceFile =>
         recursiveFileList(_.getName matches regex.regex)(resourceFile)
-      }.map(_.getAbsolutePath)
+      }.map(_.getAbsolutePath)*
     )
   }
 }

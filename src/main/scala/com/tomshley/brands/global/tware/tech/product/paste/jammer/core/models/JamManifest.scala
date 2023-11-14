@@ -6,7 +6,7 @@ import com.tomshley.brands.global.tware.tech.product.paste.common.models.PasteMo
 import scala.concurrent.Future
 
 case class JamManifest(
-                           pasteModules:Future[Seq[PasteModule]]
-                           ) extends Model{
+                        pasteModules: Future[Seq[PasteModule]]
+                      ) extends Model {
 
 }

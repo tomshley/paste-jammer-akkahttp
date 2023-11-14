@@ -1,23 +1,18 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.app
 
-import akka.actor.ActorSystem
+import akka.Done
 import akka.http.scaladsl.model.*
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.PathMatchers.LongNumber
 import akka.http.scaladsl.server.{Directives, Route}
-import akka.stream.scaladsl.{FileIO, Framing, Merge, Sink, Source}
-import akka.util.ByteString
-import akka.{Done, NotUsed}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfuture.http.routing.AkkaRestHandler
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{FileGather, Request, ResourceFileDirectories}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{Request, ResourceFileDirectories}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.*
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.JammerCachedOrLoaded
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.{JammerConfigKeys, JammerRequestContentTypes}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
 
-import java.nio.file.Paths
-import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
@@ -27,10 +22,9 @@ trait ModulePrimer[T <: SupportedPasteAssetTypes]
 object JammerHandler extends JammerHandler
 
 sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPasteAssetTypes.JS.type] {
-  override lazy val routes: Seq[Route] = Seq(jammerGet, jamAll, jamManifest)
   private final lazy val startingPoint = ResourceFileDirectories()
   private final lazy val gatheredResources = GatherResourceFiles.execute(startingPoint)
-
+  override lazy val routes: Seq[Route] = Seq(jammerGet, jamAll, jamManifest)
   private lazy val jamAll: Route =
     get {
       path(

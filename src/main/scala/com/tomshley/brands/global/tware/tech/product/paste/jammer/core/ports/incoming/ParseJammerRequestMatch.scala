@@ -1,7 +1,7 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
 
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.IncomingPort
-import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PasteModule, PastePart, SupportedPasteAssetTypes}
+import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PastePart, SupportedPasteAssetTypes}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{ParsedRequest, RequestMatch}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
 
