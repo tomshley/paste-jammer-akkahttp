@@ -1,7 +1,7 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
 
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.IncomingPort
-import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PastePart, SupportedPasteAssetTypes}
+import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PastePart, SupportedPasteAssetType}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{ParsedRequestCommand, RequestMatchCommand}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
 
@@ -16,7 +16,7 @@ sealed trait ParseJammerRequestMatch extends IncomingPort[RequestMatchCommand, P
       inboundModel.jamPathString.split(",").map(s =>
         PastePart(
           s,
-          SupportedPasteAssetTypes.values.find(
+          SupportedPasteAssetType.values.find(
             _.toFileExtension == inboundModel.fileExtension
           ).get
         )

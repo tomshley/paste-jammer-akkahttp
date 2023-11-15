@@ -17,11 +17,11 @@ import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
 
-trait ModulePrimer[T <: SupportedPasteAssetTypes]
+trait ModulePrimer[T <: SupportedPasteAssetType]
 
 object JammerHandler extends JammerHandler
 
-sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPasteAssetTypes.JS.type] {
+sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPasteAssetType.JS.type] {
   private final lazy val startingPoint = ResourceFileDirectoriesCommand()
   private final lazy val gatheredResources = GatherResourceFiles.execute(startingPoint)
   override lazy val routes: Seq[Route] = Seq(jammerGet, jamAll, jamManifest)
