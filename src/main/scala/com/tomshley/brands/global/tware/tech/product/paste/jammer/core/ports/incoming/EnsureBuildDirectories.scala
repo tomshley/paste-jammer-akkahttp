@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{Port, PortAsyncExecution}
 import com.tomshley.brands.global.tware.tech.product.paste.common.config.PasteCommonConfigKeys
-import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PasteModule, PastePart}
+import com.tomshley.brands.global.tware.tech.product.paste.common.models.{BuildableFilePath, PasteModule, PastePart}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.*
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
