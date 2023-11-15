@@ -2,15 +2,15 @@ package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.in
 
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.IncomingPort
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PastePart, SupportedPasteAssetTypes}
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{ParsedRequest, RequestMatch}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{ParsedRequestCommand, RequestMatchCommand}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
 
-sealed trait ParseJammerRequestMatch extends IncomingPort[RequestMatch, ParsedRequest] {
-  override def execute(inboundModel: RequestMatch): ParsedRequest = {
+sealed trait ParseJammerRequestMatch extends IncomingPort[RequestMatchCommand, ParsedRequestCommand] {
+  override def execute(inboundModel: RequestMatchCommand): ParsedRequestCommand = {
     lazy val contentType = JammerRequestContentTypes.values.find(
       _.toExtension == inboundModel.fileExtension
     ).get
-    ParsedRequest(
+    ParsedRequestCommand(
       inboundModel.jammerRequest,
       contentType,
       inboundModel.jamPathString.split(",").map(s =>

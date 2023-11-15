@@ -5,8 +5,8 @@ import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PasteM
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
 
 
-case class ParsedRequest(
-                          jammerRequest: Request,
+case class ParsedRequestCommand(
+                          jammerRequest: RequestCommand,
                           supportedContentTypes: JammerRequestContentTypes,
                           jamParts: Seq[PastePart]
                         ) extends IncomingModel with Model

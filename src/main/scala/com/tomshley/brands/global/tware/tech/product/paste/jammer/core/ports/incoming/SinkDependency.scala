@@ -5,16 +5,16 @@ import akka.http.scaladsl.server.Directives.*
 import akka.stream.scaladsl.{Concat, Flow, Source, StreamConverters}
 import akka.util.ByteString
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, PortAsyncExecution}
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{ParsedRequest, SourcedDependencies}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{ParsedRequestCommand, SourcedDependenciesCommand}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
 import scala.concurrent.ExecutionContext
 
-sealed trait SinkJammerDependency extends IncomingPort[ParsedRequest, SourcedDependencies] with PortAsyncExecution[ParsedRequest, SourcedDependencies] {
-  override def executeAsync(inboundModel: ParsedRequest)(implicit ec: ExecutionContext): SourcedDependencies = {
+sealed trait SinkJammerDependency extends IncomingPort[ParsedRequestCommand, SourcedDependenciesCommand] with PortAsyncExecution[ParsedRequestCommand, SourcedDependenciesCommand] {
+  override def executeAsync(inboundModel: ParsedRequestCommand)(implicit ec: ExecutionContext): SourcedDependenciesCommand = {
     given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
 
-    SourcedDependencies(
+    SourcedDependenciesCommand(
       inboundModel.jammerRequest,
       inboundModel.supportedContentTypes,
       Source.combine(

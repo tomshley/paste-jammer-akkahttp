@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.PathMatchers.LongNumber
 import akka.http.scaladsl.server.{Directives, Route}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfuture.http.routing.AkkaRestHandler
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{Request, ResourceFileDirectories}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{RequestCommand, ResourceFileDirectoriesCommand}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.*
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.JammerCachedOrLoaded
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
@@ -22,7 +22,7 @@ trait ModulePrimer[T <: SupportedPasteAssetTypes]
 object JammerHandler extends JammerHandler
 
 sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPasteAssetTypes.JS.type] {
-  private final lazy val startingPoint = ResourceFileDirectories()
+  private final lazy val startingPoint = ResourceFileDirectoriesCommand()
   private final lazy val gatheredResources = GatherResourceFiles.execute(startingPoint)
   override lazy val routes: Seq[Route] = Seq(jammerGet, jamAll, jamManifest)
   private lazy val jamAll: Route =
@@ -57,7 +57,7 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
           lazy val jammerParsedMatch =
             ParseJammerRequestMatch.execute(
               MatchRequest.execute(
-                Request(
+                RequestCommand(
                   pasteStamp,
                   pastePathWithExt
                 )

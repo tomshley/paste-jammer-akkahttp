@@ -3,19 +3,19 @@ package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.in
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.IncomingPort
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.util.FilesUtil
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.SupportedPasteAssetTypes
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{FileGather, Request, RequestMatch, ResourceFileDirectories}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{FileGatherCommand, RequestCommand, RequestMatchCommand, ResourceFileDirectoriesCommand}
 
 import java.io.File
 
-sealed trait GatherResourceFiles extends IncomingPort[ResourceFileDirectories, FileGather] with FilesUtil {
-  override def execute(inboundModel: ResourceFileDirectories): FileGather = {
+sealed trait GatherResourceFiles extends IncomingPort[ResourceFileDirectoriesCommand, FileGatherCommand] with FilesUtil {
+  override def execute(inboundModel: ResourceFileDirectoriesCommand): FileGatherCommand = {
     lazy val fallbackDirName = inboundModel.projectResourcesDirNameFallbackOption.fold(
       ifEmpty = ""
     )(dirName => dirName)
 
     lazy val regex = s".+\\.(${SupportedPasteAssetTypes.values.map(t => t.toFileExtension).distinct.mkString("|")})$$".r
 
-    FileGather(
+    FileGatherCommand(
       (inboundModel.projectResourcesDirNames ++ Seq(inboundModel.pasteDirName, fallbackDirName)).distinct.map { resourceName =>
         getClass.getClassLoader.getResource(resourceName)
       }.map { resourceURL =>

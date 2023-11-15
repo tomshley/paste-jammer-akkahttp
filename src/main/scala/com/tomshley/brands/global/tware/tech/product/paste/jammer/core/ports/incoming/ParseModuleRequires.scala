@@ -6,19 +6,19 @@ import akka.util.ByteString
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{Port, PortAsyncExecution}
 import com.tomshley.brands.global.tware.tech.product.paste.common.models
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.FileGather
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.FileGatherCommand
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
 import java.nio.file.Paths
 import scala.concurrent.{ExecutionContext, Future}
 
 
-sealed trait BuildTheJamManifest extends Port[FileGather, Future[Seq[PasteModule]]] with PortAsyncExecution[FileGather, Future[Seq[PasteModule]]] {
+sealed trait BuildTheJamManifest extends Port[FileGatherCommand, Future[Seq[PasteModule]]] with PortAsyncExecution[FileGatherCommand, Future[Seq[PasteModule]]] {
   private lazy val pastedocSink = Sink.seq[PasteModule]
 
   given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
 
-  override def executeAsync(inboundModel: FileGather)(implicit ec: ExecutionContext): Future[Seq[PasteModule]] = {
+  override def executeAsync(inboundModel: FileGatherCommand)(implicit ec: ExecutionContext): Future[Seq[PasteModule]] = {
     lazy val gatheredFiles = inboundModel.absPaths.map(
       Paths.get(_)
     ).map { path =>

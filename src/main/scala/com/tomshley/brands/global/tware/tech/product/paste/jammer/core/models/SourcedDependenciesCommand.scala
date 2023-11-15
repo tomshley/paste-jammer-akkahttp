@@ -6,8 +6,8 @@ import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure
 
 import scala.concurrent.Future
 
-case class SourcedDependencies(
-                                jammerRequest: Request,
-                                jammerParsedContentType: JammerRequestContentTypes,
-                                byteStringFuture: Future[ByteString]
+case class SourcedDependenciesCommand(
+                                       jammerRequest: RequestCommand,
+                                       jammerParsedContentType: JammerRequestContentTypes,
+                                       byteStringFuture: Future[ByteString]
                               ) extends IncomingModel

@@ -6,8 +6,8 @@ import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure
 import scala.concurrent.Future
 
 
-case class Response(
-                     jammerRequest: Request,
-                     jammerParsedContentType: JammerRequestContentTypes,
-                     jammerResponseBody: Future[String]
+case class ResponseBodyFutureEnvelope(
+                                       jammerRequest: RequestCommand,
+                                       jammerParsedContentType: JammerRequestContentTypes,
+                                       jammerResponseBody: Future[String]
                    ) extends OutgoingModel

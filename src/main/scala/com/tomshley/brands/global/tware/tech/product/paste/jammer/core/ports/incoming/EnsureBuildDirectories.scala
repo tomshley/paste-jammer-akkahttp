@@ -12,10 +12,10 @@ import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure
 import java.nio.file.{Files, Paths}
 import scala.concurrent.{ExecutionContext, Future}
 
-sealed trait EnsureBuildDirectories extends Port[ResourceFileDirectories, Future[Done]] with PortAsyncExecution[ResourceFileDirectories, Future[Done]] {
+sealed trait EnsureBuildDirectories extends Port[ResourceFileDirectoriesCommand, Future[Done]] with PortAsyncExecution[ResourceFileDirectoriesCommand, Future[Done]] {
   given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
 
-  override def executeAsync(inboundModel: ResourceFileDirectories)(implicit ec: ExecutionContext): Future[Done] = {
+  override def executeAsync(inboundModel: ResourceFileDirectoriesCommand)(implicit ec: ExecutionContext): Future[Done] = {
     Source.fromIterator(() =>
       buildDirectoryGathering(
         GatherResourceFiles.execute(inboundModel)
@@ -27,7 +27,7 @@ sealed trait EnsureBuildDirectories extends Port[ResourceFileDirectories, Future
     }).run()
   }
 
-  private def buildDirectoryGathering(fileGatheringModel: FileGather): Iterator[BuildableFilePath] = {
+  private def buildDirectoryGathering(fileGatheringModel: FileGatherCommand): Iterator[BuildableFilePath] = {
     fileGatheringModel.absPaths
       .map(
         Paths.get(_)
