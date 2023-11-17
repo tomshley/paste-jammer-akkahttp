@@ -34,7 +34,7 @@ sealed trait EnsureBuildDirectories extends Port[ResourceFileDirectoriesCommand,
       )
       .map { sourcePath =>
         val pasteModule = PasteModule(
-          part = PastePart.apply(
+          part = PastePart(
             sourcePath
           ),
           sourceFile = sourcePath.toFile

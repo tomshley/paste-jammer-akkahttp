@@ -23,7 +23,7 @@ sealed trait BuildTheJamManifest extends Port[FileGatherCommand, Future[Seq[Past
       Paths.get(_)
     ).map { path =>
       PasteModule(
-        part = PastePart.apply(
+        part = PastePart(
           path
         ),
         sourceFile = path.toFile
