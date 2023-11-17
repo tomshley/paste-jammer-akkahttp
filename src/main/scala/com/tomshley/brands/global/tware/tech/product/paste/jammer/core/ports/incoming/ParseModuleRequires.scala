@@ -13,7 +13,7 @@ import java.nio.file.Paths
 import scala.concurrent.{ExecutionContext, Future}
 
 
-sealed trait BuildTheJamManifest extends Port[FileGatherCommand, Future[Seq[PasteModule]]] with PortAsyncExecution[FileGatherCommand, Future[Seq[PasteModule]]] {
+sealed trait ParseModuleRequires extends Port[FileGatherCommand, Future[Seq[PasteModule]]] with PortAsyncExecution[FileGatherCommand, Future[Seq[PasteModule]]] {
   private lazy val pastedocSink = Sink.seq[PasteModule]
 
   given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
@@ -99,4 +99,4 @@ sealed trait BuildTheJamManifest extends Port[FileGatherCommand, Future[Seq[Past
     )
 }
 
-object BuildTheJamManifest extends BuildTheJamManifest
+object ParseModuleRequires extends ParseModuleRequires

@@ -1,6 +1,7 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.app
 
 import akka.Done
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.*
 import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives.*
@@ -11,11 +12,11 @@ import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{RequestCommand, ResourceFileDirectoriesCommand}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.*
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.JammerCachedOrLoaded
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerRequestContentTypes
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.{JammerConfigKeys, JammerRequestContentTypes}
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
-
 
 trait ModulePrimer[T <: SupportedPasteAssetType]
 
@@ -24,7 +25,7 @@ object JammerHandler extends JammerHandler
 sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPasteAssetType.JS.type] {
   private final lazy val startingPoint = ResourceFileDirectoriesCommand()
   private final lazy val gatheredResources = GatherResourceFiles.execute(startingPoint)
-  override lazy val routes: Seq[Route] = Seq(jammerGet, jamAll, jamManifest)
+  override lazy val routes: Seq[Route] = Seq(jammerGet, jamAll, jamManifest, jam4)
   private lazy val jamAll: Route =
     get {
       path(
@@ -37,6 +38,35 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
                 entity = HttpEntity(
                   ContentTypes.`text/plain(UTF-8)`,
                   "Success"
+                )
+              )
+            )
+            case Failure(exception) => complete(InternalServerError, s"An error occurred: ${exception.getMessage}")
+          }
+        }
+      }
+    }
+
+  given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
+
+
+  private def serialized()(implicit ec: ExecutionContext) = {
+    Future {
+    }
+  }
+
+  private lazy val jam4: Route =
+    get {
+      path(
+        "paste4" / LongNumber
+      ) { pasteStamp =>
+        extractExecutionContext { implicit executor =>
+          onComplete(serialized()) {
+            case Success(resultValue) => complete(
+              HttpResponse(
+                entity = HttpEntity(
+                  ContentTypes.`text/plain(UTF-8)`,
+                  resultValue.toString
                 )
               )
             )
@@ -190,7 +220,7 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
       ) { pasteStamp =>
         extractExecutionContext { implicit executor =>
           //          onComplete(coalesce()) {
-          onComplete(BuildTheJamManifest.executeAsync(gatheredResources)) {
+          onComplete(ParseModuleRequires.executeAsync(gatheredResources)) {
             case Success(resultValue) => complete(
               HttpResponse(
                 entity = HttpEntity(
