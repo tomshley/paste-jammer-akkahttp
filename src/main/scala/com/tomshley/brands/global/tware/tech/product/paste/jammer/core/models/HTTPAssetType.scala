@@ -83,6 +83,7 @@ enum HTTPAssetType(supportedPasteAssetType: SupportedPasteAssetType, mimeTypeVal
   case CSS extends HTTPAssetType(SupportedPasteAssetType.CSS, "text/css")
 
   def toExtension: String = supportedPasteAssetType.toFileExtension
+
   def toAssetType: SupportedPasteAssetType = supportedPasteAssetType
 
 

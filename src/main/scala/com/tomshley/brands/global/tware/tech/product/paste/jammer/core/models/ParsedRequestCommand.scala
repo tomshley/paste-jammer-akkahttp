@@ -5,9 +5,9 @@ import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PasteM
 
 
 case class ParsedRequestCommand(
-                          jammerRequest: RequestCommand,
-                          httpAssetType: HTTPAssetType,
-                          parts: Seq[PastePart]
-                        ) extends IncomingModel with Model {
+                                 jammerRequest: RequestCommand,
+                                 httpAssetType: HTTPAssetType,
+                                 parts: Seq[PastePart]
+                               ) extends IncomingModel with Model {
 
 }

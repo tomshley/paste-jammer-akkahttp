@@ -5,12 +5,6 @@ import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PasteM
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{CachedOrLoadedEnvelope, HTTPAssetType, ParsedRequestCommand, RequestMatchCommand}
 
 sealed trait ParseJammerRequestMatch extends IncomingPort[RequestMatchCommand, CachedOrLoadedEnvelope] {
-  private def matchManifestModuleFromPart(pastePart: PastePart) = {
-    PasteModule(
-      part = pastePart, sourceResourcePath = "paste/scripts" + pastePart.name + ".js"
-    )
-  }
-
   override def execute(inboundModel: RequestMatchCommand): CachedOrLoadedEnvelope = {
 
     lazy val httpAssetTypeValues = HTTPAssetType.values
@@ -30,6 +24,12 @@ sealed trait ParseJammerRequestMatch extends IncomingPort[RequestMatchCommand, C
         ).toSeq,
         httpAssetTypeValues.map(_.toAssetType)
       )
+    )
+  }
+
+  private def matchManifestModuleFromPart(pastePart: PastePart) = {
+    PasteModule(
+      part = pastePart, sourceResourcePath = "paste/scripts" + pastePart.name + ".js"
     )
   }
 }

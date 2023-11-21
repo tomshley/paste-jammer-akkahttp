@@ -4,6 +4,6 @@ import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.Incom
 
 
 case class RequestCommand(
-                    jamBuildStampURLPart: Long,
-                    jamPathStringWithExtURLPart: String
-                  ) extends IncomingModel
+                           jamBuildStampURLPart: Long,
+                           jamPathStringWithExtURLPart: String
+                         ) extends IncomingModel

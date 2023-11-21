@@ -34,21 +34,6 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
   )
   private final lazy val gatheredResources = GatherResourceFiles.execute(startingPoint)
   override lazy val routes: Seq[Route] = Seq(jammerAPISpec, ensureBuildDirectoriesSpec, parseModulesAndRequiresSpec, serializeSpec)
-
-  given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
-
-  private def myFunk()(implicit ec: ExecutionContext) = {
-    println("funky")
-    val resources = ParseModuleRequires.executeAsync(gatheredResources)
-      
-    resources.map(pasteModuleSeq => {
-        PasteManifest(pasteModuleSeq)
-      }
-    ).transformWith(t => {
-      PasteJsonMarshalling.serializeWithDefaultsAsync(t.getOrElse(PasteManifest(Seq())), ec)
-    })
-  }
-
   private lazy val ensureBuildDirectoriesSpec: Route =
     get {
       path(
@@ -69,7 +54,6 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
         }
       }
     }
-
   private lazy val serializeSpec: Route =
     get {
       path(
@@ -81,7 +65,7 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
               HttpResponse(
                 entity = HttpEntity(
                   ContentTypes.`application/json`,
-                  resultValue.toString
+                  resultValue
                 )
               )
             )
@@ -90,7 +74,6 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
         }
       }
     }
-
   private lazy val jammerAPISpec: Route =
     get {
       path(
@@ -223,7 +206,6 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
       //          }
 
     }
-
   private lazy val parseModulesAndRequiresSpec: Route =
     get {
       path(
@@ -245,6 +227,20 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
         }
       }
     }
+
+  given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
+
+  private def myFunk()(implicit ec: ExecutionContext) = {
+    println("funky")
+    val resources = ParseModuleRequires.executeAsync(gatheredResources)
+
+    resources.map(pasteModuleSeq => {
+      PasteManifest(pasteModuleSeq)
+    }
+    ).transformWith(t => {
+      PasteJsonMarshalling.serializeWithDefaultsAsync(t.getOrElse(PasteManifest(Seq())), ec)
+    })
+  }
 
 
 }

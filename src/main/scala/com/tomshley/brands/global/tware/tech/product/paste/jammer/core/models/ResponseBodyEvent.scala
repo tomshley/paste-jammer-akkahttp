@@ -6,7 +6,7 @@ import scala.concurrent.Future
 
 
 case class ResponseBodyEvent(
-                                       jammerRequest: RequestCommand,
-                                       jammerParsedHTTPAssetType: HTTPAssetType,
-                                       jammerResponseBody: Future[String]
-                   ) extends OutgoingModel
+                              jammerRequest: RequestCommand,
+                              jammerParsedHTTPAssetType: HTTPAssetType,
+                              jammerResponseBody: Future[String]
+                            ) extends OutgoingModel
