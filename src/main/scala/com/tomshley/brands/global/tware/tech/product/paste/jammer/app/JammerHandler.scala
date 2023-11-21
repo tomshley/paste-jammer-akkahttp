@@ -8,13 +8,15 @@ import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.PathMatchers.LongNumber
 import akka.http.scaladsl.server.{Directives, Route}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfuture.http.routing.AkkaRestHandler
+import com.tomshley.brands.global.tware.tech.product.paste.common.marshalling.PasteJsonMarshalling
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{RequestCommand, ResourceFileDirectoriesCommand}
+import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.{EnsureBuildDirectories, GatherResourceFiles, ParseModuleRequires}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{HTTPAssetType, RequestCommand}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.*
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.JammerCachedOrLoaded
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.{JammerConfigKeys, JammerRequestContentTypes}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.CachedOrLoaded
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
@@ -23,10 +25,31 @@ trait ModulePrimer[T <: SupportedPasteAssetType]
 object JammerHandler extends JammerHandler
 
 sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPasteAssetType.JS.type] {
-  private final lazy val startingPoint = ResourceFileDirectoriesCommand()
+  private final lazy val dirs = {
+    val dirlist = List("paste/scripts") //PasteCommonConfigKeys.CONTENT_DIR_SCRIPTS.toValue
+    dirlist
+  }
+  private final lazy val startingPoint = ResourceFileDirectoriesCommand(
+    projectResourcesDirNames = dirs
+  )
   private final lazy val gatheredResources = GatherResourceFiles.execute(startingPoint)
-  override lazy val routes: Seq[Route] = Seq(jammerGet, jamAll, jamManifest, jam4)
-  private lazy val jamAll: Route =
+  override lazy val routes: Seq[Route] = Seq(jammerAPISpec, ensureBuildDirectoriesSpec, parseModulesAndRequiresSpec, serializeSpec)
+
+  given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
+
+  private def myFunk()(implicit ec: ExecutionContext) = {
+    println("funky")
+    val resources = ParseModuleRequires.executeAsync(gatheredResources)
+      
+    resources.map(pasteModuleSeq => {
+        PasteManifest(pasteModuleSeq)
+      }
+    ).transformWith(t => {
+      PasteJsonMarshalling.serializeWithDefaultsAsync(t.getOrElse(PasteManifest(Seq())), ec)
+    })
+  }
+
+  private lazy val ensureBuildDirectoriesSpec: Route =
     get {
       path(
         "paste2" / LongNumber
@@ -47,25 +70,17 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
       }
     }
 
-  given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
-
-
-  private def serialized()(implicit ec: ExecutionContext) = {
-    Future {
-    }
-  }
-
-  private lazy val jam4: Route =
+  private lazy val serializeSpec: Route =
     get {
       path(
         "paste4" / LongNumber
       ) { pasteStamp =>
         extractExecutionContext { implicit executor =>
-          onComplete(serialized()) {
+          onComplete(myFunk()) {
             case Success(resultValue) => complete(
               HttpResponse(
                 entity = HttpEntity(
-                  ContentTypes.`text/plain(UTF-8)`,
+                  ContentTypes.`application/json`,
                   resultValue.toString
                 )
               )
@@ -76,15 +91,15 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
       }
     }
 
-  private lazy val jammerGet: Route =
+  private lazy val jammerAPISpec: Route =
     get {
       path(
         "paste" /
           LongNumber /
-          s".+\\.${JammerRequestContentTypes.values.map(_.toExtension).mkString("|")}$$".r
+          s".+\\.${HTTPAssetType.values.map(_.toExtension).mkString("|")}$$".r
       ) { (pasteStamp, pastePathWithExt) =>
         extractExecutionContext { implicit executor =>
-          lazy val jammerParsedMatch =
+          lazy val cachedOrLoadedEnvelope =
             ParseJammerRequestMatch.execute(
               MatchRequest.execute(
                 RequestCommand(
@@ -93,16 +108,12 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
                 )
               )
             )
-          lazy val jammerResponse = JammerCachedOrLoaded.executeAsync(
-            SinkJammerDependency.executeAsync(
-              jammerParsedMatch
-            )
-          )
+          lazy val jammerResponse = CachedOrLoaded.executeAsync(cachedOrLoadedEnvelope)
           onComplete(jammerResponse.jammerResponseBody) {
             case Success(jammerResponseValue) => complete(
               HttpResponse(
                 entity = HttpEntity(
-                  jammerResponse.jammerParsedContentType.toContentType,
+                  jammerResponse.jammerParsedHTTPAssetType.toContentType,
                   jammerResponseValue
                 )
               )
@@ -169,13 +180,13 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
       //
       //
       //              //            CompilerOptions
-      //              val sourceFile = SourceFile.fromCode(moduleFileAbsolutePath, codeUTF8, SourceKind.WEAK)
+      //              val sourceResourcePath = SourceFile.fromCode(moduleFileAbsolutePath, codeUTF8, SourceKind.WEAK)
       //
       //              val compiler = new ClosureCompiler
       //
       //              val result = compiler.compile(
       //                SourceFile.fromCode("fuck", ""),
-      //                sourceFile,
+      //                sourceResourcePath,
       //                options
       //              )
       //
@@ -213,7 +224,7 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
 
     }
 
-  private lazy val jamManifest: Route =
+  private lazy val parseModulesAndRequiresSpec: Route =
     get {
       path(
         "paste3" / LongNumber
@@ -234,5 +245,6 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPa
         }
       }
     }
+
 
 }

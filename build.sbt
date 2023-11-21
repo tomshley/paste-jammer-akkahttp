@@ -16,10 +16,6 @@ lazy val jammerProject = publishableProject(jammerProjectName, Some(file(".")))
     name := jammerProjectName,
     organization := pasteLibOrgName,
     libraryDependencies ++= Seq(
-      "com.yahoo.platform.yui" % "yuicompressor" % "2.4.8",
-      "com.google.javascript" % "closure-compiler" % "v20230802",
-      "com.googlecode.htmlcompressor" % "htmlcompressor" % "1.5.2",
-      "com.typesafe.akka" %% "akka-http-caching" % "10.6.0-M1"
     )
   )
   .dependsOn(
