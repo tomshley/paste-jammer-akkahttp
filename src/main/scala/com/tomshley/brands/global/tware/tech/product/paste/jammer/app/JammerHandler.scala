@@ -10,13 +10,13 @@ import akka.http.scaladsl.server.{Directives, Route}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfuture.http.routing.AkkaRestHandler
 import com.tomshley.brands.global.tware.tech.product.paste.common.marshalling.PasteJsonMarshalling
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
-import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.{EnsureBuildDirectories, GatherResourceFiles, ParseModuleRequires}
+import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.{CreateManifest, EnsureBuildDirectories, GatherResourceFiles, ParseModuleRequires}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{HTTPAssetType, RequestCommand}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.*
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.CachedOrLoaded
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
@@ -28,7 +28,12 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetT
   private final lazy val startingPoint = ResourceFileDirectoriesCommand(
     assetBuildDirectories = AssetBuildDirectories()
   )
-  private final lazy val gatheredResources = GatherResourceFiles.execute(startingPoint)
+  private final lazy val gatheredResources: FileGatherCommand = GatherResourceFiles.execute(startingPoint)
+
+  private def myFunk()(implicit ec: ExecutionContext) = {
+    CreateManifest.executeAsync(gatheredResources)
+  }
+
   override lazy val routes: Seq[Route] = Seq(jammerAPISpec, ensureBuildDirectoriesSpec, parseModulesAndRequiresSpec, serializeSpec)
   private lazy val ensureBuildDirectoriesSpec: Route =
     get {
@@ -225,18 +230,4 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetT
     }
 
   given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
-
-  private def myFunk()(implicit ec: ExecutionContext) = {
-    println("funky")
-    val resources = ParseModuleRequires.executeAsync(gatheredResources)
-
-    resources.map(pasteModuleSeq => {
-      PasteManifest(pasteModuleSeq)
-    }
-    ).transformWith(t => {
-      PasteJsonMarshalling.serializeWithDefaultsAsync(t.getOrElse(PasteManifest(Seq())), ec)
-    })
-  }
-
-
 }
