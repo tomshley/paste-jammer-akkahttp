@@ -1,7 +1,7 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models
 
 import akka.http.scaladsl.model.*
-import com.tomshley.brands.global.tware.tech.product.paste.common.models.SupportedPasteAssetType
+import com.tomshley.brands.global.tware.tech.product.paste.common.models.PasteAssetType
 
 /*
  *  |   Extension	| Kind of document                                  |	MIME Type
@@ -78,13 +78,13 @@ import com.tomshley.brands.global.tware.tech.product.paste.common.models.Support
  *  |   .3g2      | 3GPP2 audio/video container	                      |	video/3gpp2; audio/3gpp2 if it doesn't contain video
  *  |   .7z       | 7-zip archive	                                    |	application/x-7z-compressed
  */
-enum HTTPAssetType(supportedPasteAssetType: SupportedPasteAssetType, mimeTypeValue: String) {
-  case JS extends HTTPAssetType(SupportedPasteAssetType.JS, "text/javascript")
-  case CSS extends HTTPAssetType(SupportedPasteAssetType.CSS, "text/css")
+enum HTTPAssetType(supportedPasteAssetType: PasteAssetType, mimeTypeValue: String) {
+  case JS extends HTTPAssetType(PasteAssetType.JS, "text/javascript")
+  case CSS extends HTTPAssetType(PasteAssetType.CSS, "text/css")
 
   def toExtension: String = supportedPasteAssetType.toFileExtension
 
-  def toAssetType: SupportedPasteAssetType = supportedPasteAssetType
+  def toAssetType: PasteAssetType = supportedPasteAssetType
 
 
   def toContentType: ContentType.WithCharset = ContentType(

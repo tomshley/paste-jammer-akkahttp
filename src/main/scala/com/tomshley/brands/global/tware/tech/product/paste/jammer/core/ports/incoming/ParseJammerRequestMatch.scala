@@ -1,7 +1,7 @@
 package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
 
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.IncomingPort
-import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PasteModule, PastePart, SinkDependencyCommand, SupportedPasteAssetType}
+import com.tomshley.brands.global.tware.tech.product.paste.common.models.{PasteModule, PastePart, SinkDependencyCommand, PasteAssetType}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{CachedOrLoadedEnvelope, HTTPAssetType, ParsedRequestCommand, RequestMatchCommand}
 
 sealed trait ParseJammerRequestMatch extends IncomingPort[RequestMatchCommand, CachedOrLoadedEnvelope] {

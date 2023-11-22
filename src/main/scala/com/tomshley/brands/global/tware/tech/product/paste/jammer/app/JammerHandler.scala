@@ -20,11 +20,11 @@ import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
-trait ModulePrimer[T <: SupportedPasteAssetType]
+trait ModulePrimer[T <: PasteAssetType]
 
 object JammerHandler extends JammerHandler
 
-sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPasteAssetType.JS.type] {
+sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetType.JS.type] {
   private final lazy val startingPoint = ResourceFileDirectoriesCommand(
     assetBuildDirectories = AssetBuildDirectories()
   )
