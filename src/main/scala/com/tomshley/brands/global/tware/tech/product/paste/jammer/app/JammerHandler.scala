@@ -25,12 +25,8 @@ trait ModulePrimer[T <: SupportedPasteAssetType]
 object JammerHandler extends JammerHandler
 
 sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[SupportedPasteAssetType.JS.type] {
-  private final lazy val dirs = {
-    val dirlist = List("paste/scripts") //PasteCommonConfigKeys.CONTENT_DIR_SCRIPTS.toValue
-    dirlist
-  }
   private final lazy val startingPoint = ResourceFileDirectoriesCommand(
-    projectResourcesDirNames = dirs
+    assetBuildDirectories = AssetBuildDirectories()
   )
   private final lazy val gatheredResources = GatherResourceFiles.execute(startingPoint)
   override lazy val routes: Seq[Route] = Seq(jammerAPISpec, ensureBuildDirectoriesSpec, parseModulesAndRequiresSpec, serializeSpec)
