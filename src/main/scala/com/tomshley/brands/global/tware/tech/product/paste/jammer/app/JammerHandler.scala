@@ -7,16 +7,17 @@ import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.PathMatchers.LongNumber
 import akka.http.scaladsl.server.{Directives, Route}
+import akka.stream.IOResult
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfuture.http.routing.AkkaRestHandler
-import com.tomshley.brands.global.tware.tech.product.paste.common.marshalling.PasteJsonMarshalling
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
-import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.{CreateManifest, EnsureBuildDirectories, GatherResourceFiles, ParseModuleRequires}
+import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.*
+import com.tomshley.brands.global.tware.tech.product.paste.common.ports.outgoing.ManifestCreated
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{HTTPAssetType, RequestCommand}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.*
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.CachedOrLoaded
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
@@ -25,16 +26,38 @@ trait ModulePrimer[T <: PasteAssetType]
 object JammerHandler extends JammerHandler
 
 sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetType.JS.type] {
+  private final lazy val assetBuildDirectories = AssetBuildDirectories()
   private final lazy val startingPoint = ResourceFileDirectoriesCommand(
-    assetBuildDirectories = AssetBuildDirectories()
+    assetBuildDirectories = assetBuildDirectories
   )
-  private final lazy val gatheredResources: FileGatherCommand = GatherResourceFiles.execute(startingPoint)
+  private final lazy val gatheredResources: FileGatherCommand = GatherResourceFiles.execute(
+    startingPoint
+  )
 
   private def myFunk()(implicit ec: ExecutionContext) = {
-    CreateManifest.executeAsync(gatheredResources)
+    ManifestCreated.executeAsync(CreateManifest.executeAsync(gatheredResources))
   }
 
-  override lazy val routes: Seq[Route] = Seq(jammerAPISpec, ensureBuildDirectoriesSpec, parseModulesAndRequiresSpec, serializeSpec)
+  override lazy val routes: Seq[Route] = Seq(jammerAPISpec, loadManifestSpec, ensureBuildDirectoriesSpec, parseModulesAndRequiresSpec, serializeSpec)
+  private lazy val loadManifestSpec: Route =
+    get {
+      path(
+        "paste5" / LongNumber
+      ) { pasteStamp =>
+        extractExecutionContext { implicit executor =>
+          onComplete(LoadManifest.executeAsync(LoadManifestCommand(assetBuildDirectories))) {
+            case Success(resultValue) => complete(
+              HttpResponse(
+                entity = HttpEntity(
+                  ContentTypes.`text/plain(UTF-8)`,
+                  resultValue.toString                )
+              )
+            )
+            case Failure(exception) => complete(InternalServerError, s"An error occurred: ${exception.getMessage}")
+          }
+        }
+      }
+    }
   private lazy val ensureBuildDirectoriesSpec: Route =
     get {
       path(
@@ -65,13 +88,12 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetT
             case Success(resultValue) => complete(
               HttpResponse(
                 entity = HttpEntity(
-                  ContentTypes.`application/json`,
-                  resultValue
+                  ContentTypes.`text/plain(UTF-8)`,
+                  "Success"
                 )
               )
             )
-            case Failure(exception) => complete(InternalServerError, s"An error occurred: ${exception.getMessage}")
-          }
+            case Failure(exception) => complete(InternalServerError, s"An error occurred: ${exception.getMessage}")          }
         }
       }
     }
