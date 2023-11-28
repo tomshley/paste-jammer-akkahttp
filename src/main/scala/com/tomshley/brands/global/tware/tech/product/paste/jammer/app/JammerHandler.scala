@@ -104,24 +104,6 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetT
         }
       }
     }
-  /*
-  lazy val result = Source.future(pasteManifest()).via(Flow[PasteManifest].map(manifest =>
-          CachedOrLoaded.executeAsync(ParseJammerRequestMatch.execute(
-            MatchRequest.execute(
-              RequestCommand(
-                pasteStamp,
-                pastePathWithExt,
-                manifest
-              )
-            )
-          )
-          )
-        ).toMat(
-          Sink.head
-        )(
-          Keep.right
-        ).run()
-   */
   private lazy val jammerAPISpec: Route =
     get {
       path(
