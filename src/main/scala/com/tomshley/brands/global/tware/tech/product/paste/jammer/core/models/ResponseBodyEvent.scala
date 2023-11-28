@@ -8,5 +8,5 @@ import scala.concurrent.Future
 case class ResponseBodyEvent(
                               jammerRequest: RequestCommand,
                               jammerParsedHTTPAssetType: HTTPAssetType,
-                              jammerResponseBody: Future[String]
+                              jammerResponseBody: String
                             ) extends PortResultingModel

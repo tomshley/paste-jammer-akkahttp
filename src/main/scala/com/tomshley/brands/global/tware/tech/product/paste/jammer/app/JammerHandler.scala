@@ -8,11 +8,12 @@ import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.PathMatchers.LongNumber
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.stream.IOResult
+import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfuture.http.routing.AkkaRestHandler
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
 import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.*
 import com.tomshley.brands.global.tware.tech.product.paste.common.ports.outgoing.ManifestCreated
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{HTTPAssetType, RequestCommand}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.*
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.*
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.CachedOrLoaded
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
@@ -33,11 +34,6 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetT
   private final lazy val gatheredResources: FileGatherCommand = GatherResourceFiles.execute(
     startingPoint
   )
-
-  private def myFunk()(implicit ec: ExecutionContext) = {
-    ManifestCreated.executeAsync(CreateManifest.executeAsync(gatheredResources))
-  }
-
   override lazy val routes: Seq[Route] = Seq(jammerAPISpec, loadManifestSpec, ensureBuildDirectoriesSpec, parseModulesAndRequiresSpec, serializeSpec)
   private lazy val loadManifestSpec: Route =
     get {
@@ -45,12 +41,14 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetT
         "paste5" / LongNumber
       ) { pasteStamp =>
         extractExecutionContext { implicit executor =>
-          onComplete(LoadManifest.executeAsync(LoadManifestCommand(assetBuildDirectories))) {
+          onComplete(
+            pasteManifest()
+          ) {
             case Success(resultValue) => complete(
               HttpResponse(
                 entity = HttpEntity(
                   ContentTypes.`text/plain(UTF-8)`,
-                  resultValue.toString                )
+                  resultValue.toString)
               )
             )
             case Failure(exception) => complete(InternalServerError, s"An error occurred: ${exception.getMessage}")
@@ -64,7 +62,9 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetT
         "paste2" / LongNumber
       ) { pasteStamp =>
         extractExecutionContext { implicit executor =>
-          onComplete(EnsureBuildDirectories.executeAsync(startingPoint)) {
+          onComplete(
+            EnsureBuildDirectories.executeAsync(
+              startingPoint)) {
             case Success(resultValue) => complete(
               HttpResponse(
                 entity = HttpEntity(
@@ -84,19 +84,44 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetT
         "paste4" / LongNumber
       ) { pasteStamp =>
         extractExecutionContext { implicit executor =>
-          onComplete(myFunk()) {
+          onComplete(
+            ManifestCreated.executeAsync(
+              CreateManifest.executeAsync(
+                gatheredResources
+              )
+            )
+          ) {
             case Success(resultValue) => complete(
               HttpResponse(
                 entity = HttpEntity(
                   ContentTypes.`text/plain(UTF-8)`,
-                  "Success"
+                  resultValue.toString
                 )
               )
             )
-            case Failure(exception) => complete(InternalServerError, s"An error occurred: ${exception.getMessage}")          }
+            case Failure(exception) => complete(InternalServerError, s"An error occurred: ${exception.getMessage}")
+          }
         }
       }
     }
+  /*
+  lazy val result = Source.future(pasteManifest()).via(Flow[PasteManifest].map(manifest =>
+          CachedOrLoaded.executeAsync(ParseJammerRequestMatch.execute(
+            MatchRequest.execute(
+              RequestCommand(
+                pasteStamp,
+                pastePathWithExt,
+                manifest
+              )
+            )
+          )
+          )
+        ).toMat(
+          Sink.head
+        )(
+          Keep.right
+        ).run()
+   */
   private lazy val jammerAPISpec: Route =
     get {
       path(
@@ -104,30 +129,41 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetT
           LongNumber /
           s".+\\.${HTTPAssetType.values.map(_.toExtension).mkString("|")}$$".r
       ) { (pasteStamp, pastePathWithExt) =>
-        extractExecutionContext { implicit executor =>
-          lazy val cachedOrLoadedEnvelope =
-            ParseJammerRequestMatch.execute(
-              MatchRequest.execute(
-                RequestCommand(
-                  pasteStamp,
-                  pastePathWithExt
+        extractExecutionContext { implicit executor => {
+          onComplete(
+            Source.future(pasteManifest()).via(
+              Flow[PasteManifest].map(manifest =>
+                CachedOrLoaded.executeAsync(
+                  ParseJammerRequestMatch.execute(
+                    MatchRequest.execute(
+                      RequestCommand(
+                        pasteStamp,
+                        pastePathWithExt,
+                        manifest
+                      )
+                    )
+                  )
                 )
               )
-            )
-          lazy val jammerResponse = CachedOrLoaded.executeAsync(cachedOrLoadedEnvelope)
-          onComplete(jammerResponse.jammerResponseBody) {
-            case Success(jammerResponseValue) => complete(
+            ).toMat(
+              Sink.head
+            )(
+              Keep.right
+            ).run().flatMap(
+              responseBodyEvent => responseBodyEvent)
+          ) {
+            case Success(resultValue) => complete(
               HttpResponse(
                 entity = HttpEntity(
-                  jammerResponse.jammerParsedHTTPAssetType.toContentType,
-                  jammerResponseValue
+                  resultValue.jammerParsedHTTPAssetType.toContentType,
+                  resultValue.jammerResponseBody
                 )
               )
             )
             case Failure(exception) => complete(InternalServerError, s"An error occurred: ${exception.getMessage}")
           }
         }
-
+        }
       }
 
       //          val compressorFuture: Future[String] = Future {
@@ -252,4 +288,10 @@ sealed trait JammerHandler extends AkkaRestHandler with ModulePrimer[PasteAssetT
     }
 
   given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
+
+  private def pasteManifest()(implicit ec: ExecutionContext) = LoadManifest.executeAsync(
+    LoadManifestCommand(
+      assetBuildDirectories
+    )
+  )
 }

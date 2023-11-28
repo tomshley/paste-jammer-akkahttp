@@ -3,15 +3,14 @@ package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.ou
 import akka.actor.ActorSystem
 import akka.http.caching.LfuCache
 import akka.http.caching.scaladsl.{Cache, CachingSettings}
-import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, OutgoingPort, PortAsyncExecution}
+import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, OutgoingPort, Port, PortAsyncExecution}
 import com.tomshley.brands.global.tware.tech.product.paste.common.config.PasteCommonConfigKeys
-import com.tomshley.brands.global.tware.tech.product.paste.common.models.SourcedDependenciesCommand
 import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.SinkDependency
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{CachedOrLoadedEnvelope, ResponseBodyEvent}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
-sealed trait CachedOrLoaded extends OutgoingPort[CachedOrLoadedEnvelope, ResponseBodyEvent] with PortAsyncExecution[CachedOrLoadedEnvelope, ResponseBodyEvent] {
+sealed trait CachedOrLoaded extends Port[CachedOrLoadedEnvelope, Future[ResponseBodyEvent]] with PortAsyncExecution[CachedOrLoadedEnvelope, Future[ResponseBodyEvent]] {
   private lazy val defaultCachingSettings = CachingSettings(system)
   private lazy val lfuCacheSettings = defaultCachingSettings.lfuCacheSettings
     .withInitialCapacity(PasteCommonConfigKeys.HTTP_LFU_CACHE_INITIAL_SIZE.toValueString.toInt)
@@ -22,25 +21,26 @@ sealed trait CachedOrLoaded extends OutgoingPort[CachedOrLoadedEnvelope, Respons
 
   given system: ActorSystem = ActorSystem(PasteCommonConfigKeys.HTTP_LFU_CACHE_NAME.toValue)
 
-  override def executeAsync(inboundModel: CachedOrLoadedEnvelope)(implicit ec: ExecutionContext): ResponseBodyEvent = {
+  override def executeAsync(inboundModel: CachedOrLoadedEnvelope)(implicit ec: ExecutionContext): Future[ResponseBodyEvent] = {
 
     lazy val sinkDependency = SinkDependency.executeAsync(
       inboundModel.sinkDependencyCommand
     )
 
-    ResponseBodyEvent(
-      inboundModel.jammerRequest,
-      inboundModel.httpAssetType,
-      cachePaste.getOrLoad(
-        inboundModel.jammerRequest.jamPathStringWithExtURLPart,
-        _ => {
-          sinkDependency.byteStringFuture.map(
-            _.utf8String
-          )
-        }
-      )
+    lazy val content = cachePaste.getOrLoad(
+      inboundModel.jammerRequest.jamPathStringWithExtURLPart,
+      _ => {
+        sinkDependency.byteStringFuture.map(
+          _.utf8String
+        )
+      }
     )
 
+    content.map(utf8String => ResponseBodyEvent(
+      inboundModel.jammerRequest,
+      inboundModel.httpAssetType,
+      utf8String
+    ))
   }
 }
 

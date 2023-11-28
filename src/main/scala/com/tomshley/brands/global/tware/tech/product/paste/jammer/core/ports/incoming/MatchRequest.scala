@@ -8,6 +8,7 @@ sealed trait MatchRequest extends IncomingPort[RequestCommand, RequestMatchComma
     lazy val fileExtension = inboundModel.jamPathStringWithExtURLPart.split("\\.").last
     RequestMatchCommand(
       inboundModel,
+      inboundModel.pasteManifest,
       fileExtension,
       inboundModel.jamPathStringWithExtURLPart.split(s"\\.${fileExtension}").head
     )
