@@ -14,9 +14,8 @@ import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfut
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
 import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.*
 import com.tomshley.brands.global.tware.tech.product.paste.common.ports.outgoing.ManifestCreated
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{HTTPAssetType, RequestCommand}
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.{MatchRequest, ParseJammerRequestMatch}
-import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing.CachedOrLoaded
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{HTTPAssetType, LoadManifestoRequestCommand, RequestCommand}
+import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.{BuildJammerResponse, CacheOrLoad, MatchRequest, ParseJammerRequestMatch}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
 import scala.concurrent.ExecutionContext
@@ -25,16 +24,10 @@ import scala.util.{Failure, Success}
 
 object JammerHandler extends JammerHandler
 sealed trait JammerHandler extends AkkaRestHandler{
-  given system: ActorSystem = ActorSystem(JammerConfigKeys.JAMMER_ACTOR_SYSTEM_NAME.toValue)
+  given system: ActorSystem = ActorSystem(HexagonalConfigKeys.SERVERS_ACTOR_SYSTEM_NAME.toValue)
 
   override lazy val routes: Seq[Route] = Seq(jammerGetRoute)
 
-  private final lazy val assetBuildDirectories = AssetBuildDirectories()
-  private def pasteManifest()(implicit ec: ExecutionContext) = LoadManifest.executeAsync(
-    LoadManifestCommand(
-      assetBuildDirectories
-    )
-  )
   private lazy val jammerGetRoute: Route =
     get {
       path(
@@ -44,26 +37,12 @@ sealed trait JammerHandler extends AkkaRestHandler{
       ) { (pasteStamp, pastePathWithExt) =>
         extractExecutionContext { implicit executor => {
           onComplete(
-            Source.future(pasteManifest()).via(
-              Flow[PasteManifest].map(manifest =>
-                CachedOrLoaded.executeAsync(
-                  ParseJammerRequestMatch.execute(
-                    MatchRequest.execute(
-                      RequestCommand(
-                        pasteStamp,
-                        pastePathWithExt,
-                        manifest
-                      )
-                    )
-                  )
-                )
+            BuildJammerResponse.executeAsync(
+              LoadManifestoRequestCommand(
+                pasteStamp,
+                pastePathWithExt
               )
-            ).toMat(
-              Sink.head
-            )(
-              Keep.right
-            ).run().flatMap(
-              responseBodyEvent => responseBodyEvent)
+            )
           ) {
             case Success(resultValue) => complete(
               HttpResponse(

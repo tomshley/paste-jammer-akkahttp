@@ -1,16 +1,16 @@
-package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.outgoing
+package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
 
 import akka.actor.ActorSystem
 import akka.http.caching.LfuCache
 import akka.http.caching.scaladsl.{Cache, CachingSettings}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, OutgoingPort, Port, PortAsyncExecution}
-import com.tomshley.brands.global.tware.tech.product.paste.common.infrastructure.config.PasteCommonConfigKeys
+import com.tomshley.brands.global.tware.tech.product.paste.common.config.PasteCommonConfigKeys
 import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.SinkDependency
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{CachedOrLoadedEnvelope, ResponseBodyEvent}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-sealed trait CachedOrLoaded extends Port[CachedOrLoadedEnvelope, Future[ResponseBodyEvent]] with PortAsyncExecution[CachedOrLoadedEnvelope, Future[ResponseBodyEvent]] {
+sealed trait CacheOrLoad extends Port[CachedOrLoadedEnvelope, Future[ResponseBodyEvent]] with PortAsyncExecution[CachedOrLoadedEnvelope, Future[ResponseBodyEvent]] {
   private lazy val defaultCachingSettings = CachingSettings(system)
   private lazy val lfuCacheSettings = defaultCachingSettings.lfuCacheSettings
     .withInitialCapacity(PasteCommonConfigKeys.HTTP_LFU_CACHE_INITIAL_SIZE.toValueString.toInt)
@@ -44,4 +44,4 @@ sealed trait CachedOrLoaded extends Port[CachedOrLoadedEnvelope, Future[Response
   }
 }
 
-object CachedOrLoaded extends CachedOrLoaded
+object CacheOrLoad extends CacheOrLoad
