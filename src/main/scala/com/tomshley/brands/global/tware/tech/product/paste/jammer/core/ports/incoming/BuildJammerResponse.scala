@@ -3,7 +3,7 @@ import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, OutgoingPort, Port, PortAsyncExecution}
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.{AssetBuildDirectories, LoadManifestCommand, PasteManifest}
-import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.LoadManifest
+import com.tomshley.brands.global.tware.tech.product.paste.common.ports.LoadManifest
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{LoadManifestoRequestCommand, RequestCommand, ResponseBodyEvent}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
 
