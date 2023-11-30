@@ -1,4 +1,5 @@
-package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
+package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports
+
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, OutgoingPort, Port, PortAsyncExecution}

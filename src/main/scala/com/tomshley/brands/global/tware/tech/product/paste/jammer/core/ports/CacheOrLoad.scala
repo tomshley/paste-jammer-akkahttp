@@ -1,4 +1,4 @@
-package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
+package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports
 
 import akka.actor.ActorSystem
 import akka.http.caching.LfuCache

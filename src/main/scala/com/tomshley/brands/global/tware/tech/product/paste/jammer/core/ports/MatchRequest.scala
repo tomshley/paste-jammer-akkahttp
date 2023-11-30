@@ -1,4 +1,4 @@
-package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
+package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports
 
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.IncomingPort
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{RequestCommand, RequestMatchCommand}
