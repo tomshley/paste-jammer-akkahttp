@@ -1,11 +1,11 @@
-package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming
+package com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports
 
 import akka.actor.ActorSystem
 import akka.http.caching.LfuCache
 import akka.http.caching.scaladsl.{Cache, CachingSettings}
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.domain.{IncomingPort, OutgoingPort, Port, PortAsyncExecution}
 import com.tomshley.brands.global.tware.tech.product.paste.common.config.PasteCommonConfigKeys
-import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.SinkDependency
+import com.tomshley.brands.global.tware.tech.product.paste.common.ports.SinkDependency
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{CachedOrLoadedEnvelope, ResponseBodyEvent}
 
 import scala.concurrent.{ExecutionContext, Future}
