@@ -13,7 +13,6 @@ import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.config.Hexag
 import com.tomshley.brands.global.tech.tware.products.hexagonal.lib.runmainasfuture.http.routing.AkkaRestHandler
 import com.tomshley.brands.global.tware.tech.product.paste.common.models.*
 import com.tomshley.brands.global.tware.tech.product.paste.common.ports.incoming.*
-import com.tomshley.brands.global.tware.tech.product.paste.common.ports.outgoing.ManifestCreated
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.models.{HTTPAssetType, LoadManifestoRequestCommand, RequestCommand}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.core.ports.incoming.{BuildJammerResponse, CacheOrLoad, MatchRequest, ParseJammerRequestMatch}
 import com.tomshley.brands.global.tware.tech.product.paste.jammer.infrastructure.config.JammerConfigKeys
